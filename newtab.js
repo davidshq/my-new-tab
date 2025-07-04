@@ -102,22 +102,41 @@ class NewTabPage {
 
     groupEventsByDate(events) {
         const grouped = {};
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
         
         events.forEach(event => {
-            let dateKey;
+            const startDate = new Date(event.start.dateTime || event.start.date);
+            const endDate = new Date(event.end.dateTime || event.end.date);
+            
+            // For all-day events, the end date is exclusive, so we need to adjust
             if (event.start.date) {
-                // All-day event: use the date string directly (YYYY-MM-DD)
-                // This is always interpreted as local time below
-                dateKey = event.start.date;
-            } else {
-                // Timed event: use local date string (YYYY-MM-DD)
-                const date = new Date(event.start.dateTime);
-                dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+                // All-day event: end date is exclusive, so subtract one day
+                endDate.setDate(endDate.getDate() - 1);
             }
-            if (!grouped[dateKey]) {
-                grouped[dateKey] = [];
+            
+            // Generate all dates this event spans
+            const eventDates = [];
+            const currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate) {
+                // Only include dates that are today or in the future
+                if (currentDate >= today) {
+                    const dateKey = currentDate.getFullYear() + '-' + 
+                                  String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                                  String(currentDate.getDate()).padStart(2, '0');
+                    eventDates.push(dateKey);
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
             }
-            grouped[dateKey].push(event);
+            
+            // Add event to each relevant date
+            eventDates.forEach(dateKey => {
+                if (!grouped[dateKey]) {
+                    grouped[dateKey] = [];
+                }
+                grouped[dateKey].push(event);
+            });
         });
 
         // Sort events within each date by start time
@@ -144,7 +163,7 @@ class NewTabPage {
             day: 'numeric' 
         });
 
-        const eventsHTML = events.map(event => this.renderEvent(event)).join('');
+        const eventsHTML = events.map(event => this.renderEvent(event, dateString)).join('');
 
         return `
             <div class="calendar-day">
@@ -159,24 +178,83 @@ class NewTabPage {
         `;
     }
 
-    renderEvent(event) {
+    renderEvent(event, currentDateString) {
         const startTime = new Date(event.start.dateTime || event.start.date);
         const endTime = new Date(event.end.dateTime || event.end.date);
         
+        // For all-day events, the end date is exclusive, so we need to adjust
+        if (event.start.date) {
+            endTime.setDate(endTime.getDate() - 1);
+        }
+        
+        // Parse current date to compare with event dates
+        const [year, month, day] = currentDateString.split('-');
+        const currentDate = new Date(Number(year), Number(month) - 1, Number(day));
+        
         let timeString = '';
+        let isFirstDay = false;
+        let isLastDay = false;
+        
         if (event.start.dateTime) {
-            // All-day events don't have time
-            timeString = `${startTime.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            })} - ${endTime.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            })}`;
+            // Timed event
+            const currentDateStart = new Date(currentDate);
+            const currentDateEnd = new Date(currentDate);
+            currentDateEnd.setDate(currentDateEnd.getDate() + 1);
+            
+            isFirstDay = startTime >= currentDateStart && startTime < currentDateEnd;
+            isLastDay = endTime > currentDateStart && endTime <= currentDateEnd;
+            
+            if (isFirstDay && isLastDay) {
+                // Event starts and ends on the same day
+                timeString = `${startTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })} - ${endTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })}`;
+            } else if (isFirstDay) {
+                // Event starts on this day
+                timeString = `${startTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })} - ...`;
+            } else if (isLastDay) {
+                // Event ends on this day
+                timeString = `... - ${endTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })}`;
+            } else {
+                // Event spans through this day (middle day)
+                timeString = 'All day';
+            }
         } else {
-            timeString = 'All day';
+            // All-day event
+            const currentDateStart = new Date(currentDate);
+            const currentDateEnd = new Date(currentDate);
+            currentDateEnd.setDate(currentDateEnd.getDate() + 1);
+            
+            isFirstDay = startTime >= currentDateStart && startTime < currentDateEnd;
+            isLastDay = endTime >= currentDateStart && endTime < currentDateEnd;
+            
+            if (isFirstDay && isLastDay) {
+                // Single day all-day event
+                timeString = 'All day';
+            } else if (isFirstDay) {
+                // Multi-day event starts on this day
+                timeString = 'All day (starts)';
+            } else if (isLastDay) {
+                // Multi-day event ends on this day
+                timeString = 'All day (ends)';
+            } else {
+                // Multi-day event spans through this day
+                timeString = 'All day';
+            }
         }
 
         return `

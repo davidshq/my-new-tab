@@ -2,6 +2,7 @@ class NewTabPage {
     constructor() {
         this.calendarService = new GoogleCalendarService();
         this.currentDays = 7;
+        this.isTraditionalView = true; // Default to traditional view
         this.init();
     }
 
@@ -35,6 +36,7 @@ class NewTabPage {
     setupEventListeners() {
         const daysSelect = document.getElementById('daysSelect');
         const refreshBtn = document.getElementById('refreshBtn');
+        const viewToggleBtn = document.getElementById('viewToggleBtn');
 
         daysSelect.addEventListener('change', (e) => {
             this.currentDays = parseInt(e.target.value);
@@ -45,15 +47,26 @@ class NewTabPage {
         refreshBtn.addEventListener('click', () => {
             this.loadCalendar();
         });
+
+        viewToggleBtn.addEventListener('click', () => {
+            this.isTraditionalView = !this.isTraditionalView;
+            this.updateViewToggleIcon();
+            this.saveSettings();
+            this.loadCalendar();
+        });
     }
 
     async loadSettings() {
         try {
-            const result = await chrome.storage.sync.get(['calendarDays']);
+            const result = await chrome.storage.sync.get(['calendarDays', 'calendarView']);
             if (result.calendarDays) {
                 this.currentDays = result.calendarDays;
                 document.getElementById('daysSelect').value = this.currentDays;
             }
+            if (result.calendarView !== undefined) {
+                this.isTraditionalView = result.calendarView;
+            }
+            this.updateViewToggleIcon();
         } catch (error) {
             console.error('Error loading settings:', error);
         }
@@ -61,7 +74,10 @@ class NewTabPage {
 
     async saveSettings() {
         try {
-            await chrome.storage.sync.set({ calendarDays: this.currentDays });
+            await chrome.storage.sync.set({ 
+                calendarDays: this.currentDays,
+                calendarView: this.isTraditionalView
+            });
         } catch (error) {
             console.error('Error saving settings:', error);
         }
@@ -80,6 +96,17 @@ class NewTabPage {
         }
     }
 
+    updateViewToggleIcon() {
+        const icon = document.getElementById('viewToggleIcon');
+        if (this.isTraditionalView) {
+            // Show agenda icon (list view)
+            icon.innerHTML = '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>';
+        } else {
+            // Show calendar icon (grid view)
+            icon.innerHTML = '<path d="M3 3h18v18H3zM8 12h8M12 8v8"/>';
+        }
+    }
+
     renderCalendar(events) {
         const calendarContent = document.getElementById('calendarContent');
         
@@ -91,13 +118,113 @@ class NewTabPage {
         // Group events by date
         const eventsByDate = this.groupEventsByDate(events);
         
-        const calendarHTML = `
-            <div class="calendar-grid">
-                ${Object.keys(eventsByDate).map(date => this.renderDay(date, eventsByDate[date])).join('')}
+        if (this.isTraditionalView) {
+            const calendarHTML = this.renderTraditionalCalendar(eventsByDate);
+            calendarContent.innerHTML = calendarHTML;
+        } else {
+            const calendarHTML = `
+                <div class="calendar-grid">
+                    ${Object.keys(eventsByDate).map(date => this.renderDay(date, eventsByDate[date])).join('')}
+                </div>
+            `;
+            calendarContent.innerHTML = calendarHTML;
+        }
+    }
+
+    renderTraditionalCalendar(eventsByDate) {
+        // Only show the next X days, starting from today
+        const daysToShow = this.currentDays;
+        const today = new Date();
+        const days = [];
+        for (let i = 0; i < daysToShow; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            const dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            days.push({
+                date,
+                dateKey,
+                hasEvents: eventsByDate[dateKey] && eventsByDate[dateKey].length > 0,
+                events: eventsByDate[dateKey] || []
+            });
+        }
+        return `
+            <div class="traditional-calendar single-row-calendar">
+                <div class="calendar-days-row">
+                    ${days.map(dayData => this.renderCalendarDay(dayData)).join('')}
+                </div>
             </div>
         `;
+    }
+
+    renderWeek(week) {
+        return `
+            <div class="calendar-week">
+                ${week.map(dayData => this.renderCalendarDay(dayData)).join('')}
+            </div>
+        `;
+    }
+
+    renderCalendarDay(dayData) {
+        const { date, dateKey, hasEvents, events } = dayData;
+        const isToday = this.isToday(date);
+        const isCurrentMonth = this.isCurrentMonth(date);
         
-        calendarContent.innerHTML = calendarHTML;
+        const dayNumber = date.getDate();
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+        
+        let eventsHTML = '';
+        if (hasEvents) {
+            eventsHTML = `
+                <div class="calendar-day-events">
+                    ${events.slice(0, 2).map(event => this.renderCalendarEvent(event, dateKey)).join('')}
+                    ${events.length > 2 ? `<div class="more-events">+${events.length - 2} more</div>` : ''}
+                </div>
+            `;
+        }
+
+        return `
+            <div class="calendar-day-cell ${isToday ? 'today' : ''} ${!isCurrentMonth ? 'other-month' : ''} ${hasEvents ? 'has-events' : ''}">
+                <div class="calendar-day-header">
+                    <div class="calendar-day-number">${dayNumber}</div>
+                    <div class="calendar-day-name">${dayName}</div>
+                </div>
+                ${eventsHTML}
+            </div>
+        `;
+    }
+
+    renderCalendarEvent(event, dateKey) {
+        const startTime = new Date(event.start.dateTime || event.start.date);
+        const isAllDay = !event.start.dateTime;
+        
+        let timeString = '';
+        if (!isAllDay) {
+            timeString = startTime.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        return `
+            <div class="calendar-event-item ${isAllDay ? 'all-day' : ''}">
+                <div class="calendar-event-time">${isAllDay ? 'All day' : timeString}</div>
+                <div class="calendar-event-title">${event.summary}</div>
+            </div>
+        `;
+    }
+
+    isToday(date) {
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+               date.getMonth() === today.getMonth() &&
+               date.getFullYear() === today.getFullYear();
+    }
+
+    isCurrentMonth(date) {
+        const today = new Date();
+        return date.getMonth() === today.getMonth() &&
+               date.getFullYear() === today.getFullYear();
     }
 
     groupEventsByDate(events) {

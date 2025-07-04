@@ -254,8 +254,112 @@ body {
 }
 
 .auth-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Google Keep Widget Styles */
+.keep-widget .widget-header {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.keep-content {
+    min-height: 400px;
+}
+
+.notes-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.note-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid #4CAF50;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.note-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.note-item.pinned {
+    border-left-color: #FFC107;
+    background: linear-gradient(135deg, #fff9c4 0%, #fff 100%);
+}
+
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.note-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    line-height: 1.3;
+    flex: 1;
+}
+
+.note-pin {
+    color: #FFC107;
+    font-size: 1.2rem;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+}
+
+.note-content {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.note-date {
+    font-weight: 500;
+}
+
+.note-labels {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.note-label {
+    background: #e8f5e8;
+    color: #4CAF50;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.no-notes {
+    text-align: center;
+    color: #666;
+    font-size: 1.1rem;
+    padding: 2rem;
 }
 
 @media (max-width: 768px) {
@@ -278,6 +382,14 @@ body {
     }
     
     .widget-content {
+        padding: 1rem;
+    }
+    
+    .notes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .note-item {
         padding: 1rem;
     }
 } 

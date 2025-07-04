@@ -1,7 +1,9 @@
 class NewTabPage {
     constructor() {
         this.calendarService = new GoogleCalendarService();
+        this.keepService = new GoogleKeepService();
         this.currentDays = 7;
+        this.currentKeepFilter = 'all';
         this.init();
     }
 
@@ -10,6 +12,7 @@ class NewTabPage {
         this.setupEventListeners();
         this.loadSettings();
         await this.loadCalendar();
+        await this.loadKeepNotes();
         
         // Update time every minute
         setInterval(() => this.updateTime(), 60000);
@@ -35,6 +38,8 @@ class NewTabPage {
     setupEventListeners() {
         const daysSelect = document.getElementById('daysSelect');
         const refreshBtn = document.getElementById('refreshBtn');
+        const keepFilterSelect = document.getElementById('keepFilterSelect');
+        const refreshKeepBtn = document.getElementById('refreshKeepBtn');
 
         daysSelect.addEventListener('change', (e) => {
             this.currentDays = parseInt(e.target.value);
@@ -45,14 +50,28 @@ class NewTabPage {
         refreshBtn.addEventListener('click', () => {
             this.loadCalendar();
         });
+
+        keepFilterSelect.addEventListener('change', (e) => {
+            this.currentKeepFilter = e.target.value;
+            this.saveSettings();
+            this.loadKeepNotes();
+        });
+
+        refreshKeepBtn.addEventListener('click', () => {
+            this.loadKeepNotes();
+        });
     }
 
     async loadSettings() {
         try {
-            const result = await chrome.storage.sync.get(['calendarDays']);
+            const result = await chrome.storage.sync.get(['calendarDays', 'keepFilter']);
             if (result.calendarDays) {
                 this.currentDays = result.calendarDays;
                 document.getElementById('daysSelect').value = this.currentDays;
+            }
+            if (result.keepFilter) {
+                this.currentKeepFilter = result.keepFilter;
+                document.getElementById('keepFilterSelect').value = this.currentKeepFilter;
             }
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -61,7 +80,10 @@ class NewTabPage {
 
     async saveSettings() {
         try {
-            await chrome.storage.sync.set({ calendarDays: this.currentDays });
+            await chrome.storage.sync.set({ 
+                calendarDays: this.currentDays,
+                keepFilter: this.currentKeepFilter
+            });
         } catch (error) {
             console.error('Error saving settings:', error);
         }
@@ -77,6 +99,19 @@ class NewTabPage {
         } catch (error) {
             console.error('Error loading calendar:', error);
             this.showError('Failed to load calendar events. Please try again.');
+        }
+    }
+
+    async loadKeepNotes() {
+        const keepContent = document.getElementById('keepContent');
+        keepContent.innerHTML = '<div class="loading">Loading notes...</div>';
+
+        try {
+            const notes = await this.keepService.getNotes(this.currentKeepFilter);
+            this.renderKeepNotes(notes);
+        } catch (error) {
+            console.error('Error loading Keep notes:', error);
+            this.showKeepError('Failed to load notes. Please try again.');
         }
     }
 
@@ -266,9 +301,82 @@ class NewTabPage {
         `;
     }
 
+    renderKeepNotes(notes) {
+        const keepContent = document.getElementById('keepContent');
+        
+        if (!notes || notes.length === 0) {
+            keepContent.innerHTML = '<div class="no-notes">No notes found.</div>';
+            return;
+        }
+
+        const notesHTML = `
+            <div class="notes-grid">
+                ${notes.map(note => this.renderNote(note)).join('')}
+            </div>
+        `;
+        
+        keepContent.innerHTML = notesHTML;
+    }
+
+    renderNote(note) {
+        const title = note.title || 'Untitled';
+        const content = note.textContent || '';
+        const isPinned = note.isPinned || false;
+        const labels = note.labels || [];
+        const createdTime = new Date(note.createdTimeUsec / 1000);
+        const modifiedTime = new Date(note.userEditedTimeUsec / 1000);
+        
+        const timeAgo = this.getTimeAgo(modifiedTime);
+        const labelsHTML = labels.length > 0 ? 
+            `<div class="note-labels">${labels.map(label => `<span class="note-label">${label.name}</span>`).join('')}</div>` : '';
+
+        return `
+            <div class="note-item ${isPinned ? 'pinned' : ''}" onclick="window.open('https://keep.google.com/#NOTE/${note.id}', '_blank')">
+                <div class="note-header">
+                    <h3 class="note-title">${this.escapeHtml(title)}</h3>
+                    ${isPinned ? '<span class="note-pin">📌</span>' : ''}
+                </div>
+                ${content ? `<div class="note-content">${this.escapeHtml(content)}</div>` : ''}
+                <div class="note-meta">
+                    <span class="note-date">${timeAgo}</span>
+                    ${labelsHTML}
+                </div>
+            </div>
+        `;
+    }
+
+    getTimeAgo(date) {
+        const now = new Date();
+        const diffInMs = now - date;
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+        if (diffInMinutes < 1) return 'Just now';
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        if (diffInDays < 7) return `${diffInDays}d ago`;
+        
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     showError(message) {
         const calendarContent = document.getElementById('calendarContent');
         calendarContent.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+
+    showKeepError(message) {
+        const keepContent = document.getElementById('keepContent');
+        keepContent.innerHTML = `<div class="error-message">${message}</div>`;
     }
 }
 
@@ -331,6 +439,85 @@ class GoogleCalendarService {
 
         const data = await response.json();
         return data.items || [];
+    }
+}
+
+class GoogleKeepService {
+    constructor() {
+        this.isAuthenticated = false;
+    }
+
+    async authenticate() {
+        try {
+            const token = await this.getAuthToken();
+            this.isAuthenticated = !!token;
+            return this.isAuthenticated;
+        } catch (error) {
+            console.error('Keep authentication error:', error);
+            return false;
+        }
+    }
+
+    async getAuthToken() {
+        return new Promise((resolve, reject) => {
+            chrome.identity.getAuthToken({ interactive: true }, (token) => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve(token);
+                }
+            });
+        });
+    }
+
+    async getNotes(filter = 'all') {
+        const isAuthenticated = await this.authenticate();
+        if (!isAuthenticated) {
+            throw new Error('Authentication required');
+        }
+
+        const token = await this.getAuthToken();
+        
+        // Google Keep API endpoint
+        const url = 'https://keep.googleapis.com/v1/notes';
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        let notes = data.notes || [];
+
+        // Apply filters
+        switch (filter) {
+            case 'pinned':
+                notes = notes.filter(note => note.isPinned);
+                break;
+            case 'recent':
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                notes = notes.filter(note => {
+                    const modifiedTime = new Date(note.userEditedTimeUsec / 1000);
+                    return modifiedTime > oneWeekAgo;
+                });
+                break;
+            case 'all':
+            default:
+                // No filtering needed
+                break;
+        }
+
+        // Sort by modification time (most recent first)
+        notes.sort((a, b) => b.userEditedTimeUsec - a.userEditedTimeUsec);
+
+        return notes.slice(0, 20); // Limit to 20 notes
     }
 }
 

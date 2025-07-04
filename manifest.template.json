@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "My New Tab",
     "version": "1.0.0",
-    "description": "A customizable new tab page with widgets including Google Calendar",
+    "description": "A customizable new tab page with widgets including Google Calendar and Google Keep",
     "permissions": [
       "storage",
       "identity"
@@ -17,7 +17,8 @@
     "oauth2": {
       "client_id": "{{REPLACE_WITH_CLIENT_ID}}",
       "scopes": [
-        "https://www.googleapis.com/auth/calendar.readonly"
+        "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/keep.readonly"
       ]
     },
     "chrome_url_overrides": {

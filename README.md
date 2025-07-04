@@ -13,6 +13,13 @@ A beautiful and customizable new tab Chrome extension that displays your Google 
 - **Settings Persistence**: Your preferences are saved and restored across sessions
 - **Mobile Responsive**: Works great on all screen sizes
 
+## Screenshots
+## Traditional View
+![Traditional View of Calendar](/screenshots/calendar-view.png)
+
+## Agenda View
+![Agenda View of Calendar](/screenshots/agenda-view.png)
+
 ## Setup Instructions
 
 ### 1. Google Cloud Console Setup
@@ -171,10 +178,8 @@ To debug the extension:
 - [ ] Google Keep widget integration
 - [ ] Multiple calendar support
 - [ ] Weather widget
-- [ ] Quick links/bookmarks widget
-- [ ] Customizable themes
 - [ ] Drag-and-drop widget reordering
-- [ ] Event filtering and search
+- [ ] Create, edit, delete calendar events
 
 ## Contributing
 

@@ -46,6 +46,47 @@ Before using the extension, you need to set up Google Calendar API access:
 3. Grant the necessary permissions for calendar access
 4. Your calendar events will now be displayed!
 
+## Google OAuth Client ID Setup
+
+This extension uses Google APIs and requires a Google OAuth client ID.  
+**For security and flexibility, the client ID is not included in this repository.**
+
+### How to Set Up
+
+1. **Create a Google Cloud Project:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/).
+   - Create a new project or select an existing one.
+   - Enable the Google Calendar API.
+
+2. **Configure OAuth Consent Screen:**
+   - Set the user type to "External".
+   - Fill in the required fields.
+
+3. **Create OAuth 2.0 Credentials:**
+   - Application type: Chrome Extension
+   - Add your extension's ID (from `chrome://extensions` after loading unpacked).
+   - Copy the generated client ID.
+
+4. **Update `manifest.json`:**
+   - Open `manifest.json`.
+   - Replace the value of `"client_id"` under `"oauth2"` with your client ID:
+     ```json
+     "oauth2": {
+       "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+       "scopes": [
+         "https://www.googleapis.com/auth/calendar.readonly"
+       ]
+     }
+     ```
+
+5. **Load the Extension:**
+   - Go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked" and select your extension folder
+
+**Note:**  
+If you are contributing to this project, please do not commit your client ID to the repository.
+
 ## File Structure
 
 ```

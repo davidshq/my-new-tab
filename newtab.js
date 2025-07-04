@@ -3,6 +3,7 @@ class NewTabPage {
         this.calendarService = new GoogleCalendarService();
         this.currentDays = 7;
         this.isTraditionalView = true; // Default to traditional view
+        this.useSampleData = false; // Default to real data
         this.init();
     }
 
@@ -37,6 +38,9 @@ class NewTabPage {
         const daysSelect = document.getElementById('daysSelect');
         const refreshBtn = document.getElementById('refreshBtn');
         const viewToggleBtn = document.getElementById('viewToggleBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
 
         daysSelect.addEventListener('change', (e) => {
             this.currentDays = parseInt(e.target.value);
@@ -54,17 +58,64 @@ class NewTabPage {
             this.saveSettings();
             this.loadCalendar();
         });
+
+        // Settings modal functionality
+        settingsBtn.addEventListener('click', () => {
+            this.openSettings();
+        });
+
+        closeSettingsBtn.addEventListener('click', () => {
+            this.closeSettings();
+        });
+
+        // Close modal when clicking outside
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                this.closeSettings();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && settingsModal.classList.contains('show')) {
+                this.closeSettings();
+            }
+        });
+
+        // Sample data toggle
+        const useSampleDataToggle = document.getElementById('useSampleData');
+        useSampleDataToggle.addEventListener('change', (e) => {
+            this.useSampleData = e.target.checked;
+            this.saveSettings();
+            this.loadCalendar();
+        });
+    }
+
+    openSettings() {
+        const settingsModal = document.getElementById('settingsModal');
+        settingsModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeSettings() {
+        const settingsModal = document.getElementById('settingsModal');
+        settingsModal.classList.remove('show');
+        document.body.style.overflow = '';
     }
 
     async loadSettings() {
         try {
-            const result = await chrome.storage.sync.get(['calendarDays', 'calendarView']);
+            const result = await chrome.storage.sync.get(['calendarDays', 'calendarView', 'useSampleData']);
             if (result.calendarDays) {
                 this.currentDays = result.calendarDays;
                 document.getElementById('daysSelect').value = this.currentDays;
             }
             if (result.calendarView !== undefined) {
                 this.isTraditionalView = result.calendarView;
+            }
+            if (result.useSampleData !== undefined) {
+                this.useSampleData = result.useSampleData;
+                document.getElementById('useSampleData').checked = this.useSampleData;
             }
             this.updateViewToggleIcon();
         } catch (error) {
@@ -76,7 +127,8 @@ class NewTabPage {
         try {
             await chrome.storage.sync.set({ 
                 calendarDays: this.currentDays,
-                calendarView: this.isTraditionalView
+                calendarView: this.isTraditionalView,
+                useSampleData: this.useSampleData
             });
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -88,7 +140,12 @@ class NewTabPage {
         calendarContent.innerHTML = '<div class="loading">Loading calendar...</div>';
 
         try {
-            const events = await this.calendarService.getEvents(this.currentDays);
+            let events;
+            if (this.useSampleData) {
+                events = this.generateSampleEvents();
+            } else {
+                events = await this.calendarService.getEvents(this.currentDays);
+            }
             this.renderCalendar(events);
         } catch (error) {
             console.error('Error loading calendar:', error);
@@ -396,6 +453,122 @@ class NewTabPage {
     showError(message) {
         const calendarContent = document.getElementById('calendarContent');
         calendarContent.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+
+    generateSampleEvents() {
+        const events = [];
+        const today = new Date();
+        
+        // Sample event templates
+        const sampleEvents = [
+            {
+                summary: 'Team Meeting',
+                location: 'Conference Room A',
+                start: { dateTime: '2024-01-15T10:00:00Z' },
+                end: { dateTime: '2024-01-15T11:00:00Z' }
+            },
+            {
+                summary: 'Lunch with Client',
+                location: 'Downtown Restaurant',
+                start: { dateTime: '2024-01-15T12:30:00Z' },
+                end: { dateTime: '2024-01-15T14:00:00Z' }
+            },
+            {
+                summary: 'Project Review',
+                location: 'Virtual Meeting',
+                start: { dateTime: '2024-01-16T14:00:00Z' },
+                end: { dateTime: '2024-01-16T15:30:00Z' }
+            },
+            {
+                summary: 'Doctor Appointment',
+                location: 'Medical Center',
+                start: { dateTime: '2024-01-17T09:00:00Z' },
+                end: { dateTime: '2024-01-17T10:00:00Z' }
+            },
+            {
+                summary: 'Gym Session',
+                location: 'Fitness Center',
+                start: { dateTime: '2024-01-17T18:00:00Z' },
+                end: { dateTime: '2024-01-17T19:30:00Z' }
+            },
+            {
+                summary: 'Dinner with Friends',
+                location: 'Italian Restaurant',
+                start: { dateTime: '2024-01-18T19:00:00Z' },
+                end: { dateTime: '2024-01-18T21:00:00Z' }
+            },
+            {
+                summary: 'All Day Event - Conference',
+                location: 'Convention Center',
+                start: { date: '2024-01-19' },
+                end: { date: '2024-01-19' }
+            },
+            {
+                summary: 'Weekend Trip',
+                location: 'Mountain Resort',
+                start: { dateTime: '2024-01-20T08:00:00Z' },
+                end: { dateTime: '2024-01-21T18:00:00Z' }
+            },
+            {
+                summary: 'Code Review',
+                location: 'Office',
+                start: { dateTime: '2024-01-22T11:00:00Z' },
+                end: { dateTime: '2024-01-22T12:00:00Z' }
+            },
+            {
+                summary: 'Product Launch',
+                location: 'Main Auditorium',
+                start: { dateTime: '2024-01-23T15:00:00Z' },
+                end: { dateTime: '2024-01-23T17:00:00Z' }
+            }
+        ];
+
+        // Generate events for the next X days based on currentDays setting
+        for (let i = 0; i < this.currentDays; i++) {
+            const eventDate = new Date(today);
+            eventDate.setDate(today.getDate() + i);
+            
+            // Add 1-3 random events per day
+            const eventsForDay = Math.floor(Math.random() * 3) + 1;
+            for (let j = 0; j < eventsForDay; j++) {
+                const eventIndex = Math.floor(Math.random() * sampleEvents.length);
+                const sampleEvent = sampleEvents[eventIndex];
+                
+                // Create a new event with the current date
+                const newEvent = {
+                    ...sampleEvent,
+                    start: { ...sampleEvent.start },
+                    end: { ...sampleEvent.end }
+                };
+
+                // Adjust the date to match the current day
+                if (newEvent.start.dateTime) {
+                    const startDate = new Date(newEvent.start.dateTime);
+                    startDate.setFullYear(eventDate.getFullYear());
+                    startDate.setMonth(eventDate.getMonth());
+                    startDate.setDate(eventDate.getDate());
+                    newEvent.start.dateTime = startDate.toISOString();
+
+                    const endDate = new Date(newEvent.end.dateTime);
+                    endDate.setFullYear(eventDate.getFullYear());
+                    endDate.setMonth(eventDate.getMonth());
+                    endDate.setDate(eventDate.getDate());
+                    newEvent.end.dateTime = endDate.toISOString();
+                } else if (newEvent.start.date) {
+                    newEvent.start.date = eventDate.toISOString().split('T')[0];
+                    newEvent.end.date = eventDate.toISOString().split('T')[0];
+                }
+
+                events.push(newEvent);
+            }
+        }
+
+        // Sort events by start time
+        return events.sort((a, b) => {
+            const aTime = a.start.dateTime || a.start.date;
+            const bTime = b.start.dateTime || b.start.date;
+            return new Date(aTime) - new Date(bTime);
+        });
     }
 }
 

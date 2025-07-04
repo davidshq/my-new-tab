@@ -104,9 +104,16 @@ class NewTabPage {
         const grouped = {};
         
         events.forEach(event => {
-            const date = new Date(event.start.dateTime || event.start.date);
-            const dateKey = date.toISOString().split('T')[0];
-            
+            let dateKey;
+            if (event.start.date) {
+                // All-day event: use the date string directly (YYYY-MM-DD)
+                // This is always interpreted as local time below
+                dateKey = event.start.date;
+            } else {
+                // Timed event: use local date string (YYYY-MM-DD)
+                const date = new Date(event.start.dateTime);
+                dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            }
             if (!grouped[dateKey]) {
                 grouped[dateKey] = [];
             }
@@ -126,7 +133,11 @@ class NewTabPage {
     }
 
     renderDay(dateString, events) {
-        const date = new Date(dateString);
+        // For all-day events, dateString is YYYY-MM-DD and should be interpreted as local time
+        // For timed events, dateString is also YYYY-MM-DD
+        // Always construct the date as local time
+        const [year, month, day] = dateString.split('-');
+        const date = new Date(Number(year), Number(month) - 1, Number(day));
         const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
         const dayDate = date.toLocaleDateString('en-US', { 
             month: 'short', 

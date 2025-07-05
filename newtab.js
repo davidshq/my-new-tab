@@ -8,10 +8,14 @@ class NewTabPage {
     }
 
     async init() {
+        console.log('Initializing NewTabPage...');
         this.updateTime();
         this.setupEventListeners();
-        this.loadSettings();
+        console.log('Loading settings...');
+        await this.loadSettings();
+        console.log('Settings loaded, loading calendar...');
         await this.loadCalendar();
+        console.log('Initialization complete');
         
         // Update time every minute
         setInterval(() => this.updateTime(), 60000);
@@ -85,6 +89,7 @@ class NewTabPage {
         // Sample data toggle
         const useSampleDataToggle = document.getElementById('useSampleData');
         useSampleDataToggle.addEventListener('change', (e) => {
+            console.log('Sample data toggle changed to:', e.target.checked);
             this.useSampleData = e.target.checked;
             this.saveSettings();
             this.loadCalendar();
@@ -106,6 +111,8 @@ class NewTabPage {
     async loadSettings() {
         try {
             const result = await chrome.storage.sync.get(['calendarDays', 'calendarView', 'useSampleData']);
+            console.log('Loaded settings:', result);
+            
             if (result.calendarDays) {
                 this.currentDays = result.calendarDays;
                 document.getElementById('daysSelect').value = this.currentDays;
@@ -116,6 +123,7 @@ class NewTabPage {
             if (result.useSampleData !== undefined) {
                 this.useSampleData = result.useSampleData;
                 document.getElementById('useSampleData').checked = this.useSampleData;
+                console.log('Set useSampleData to:', this.useSampleData);
             }
             this.updateViewToggleIcon();
         } catch (error) {
@@ -139,12 +147,18 @@ class NewTabPage {
         const calendarContent = document.getElementById('calendarContent');
         calendarContent.innerHTML = '<div class="loading">Loading calendar...</div>';
 
+        console.log('Loading calendar with useSampleData:', this.useSampleData);
+
         try {
             let events;
             if (this.useSampleData) {
+                console.log('Generating sample events...');
                 events = this.generateSampleEvents();
+                console.log('Generated', events.length, 'sample events');
             } else {
+                console.log('Fetching real calendar events...');
                 events = await this.calendarService.getEvents(this.currentDays);
+                console.log('Fetched', events.length, 'real events');
             }
             this.renderCalendar(events);
         } catch (error) {
@@ -193,15 +207,25 @@ class NewTabPage {
         const daysToShow = this.currentDays;
         const today = new Date();
         const days = [];
+        
+        console.log('Rendering traditional calendar for', daysToShow, 'days');
+        console.log('Available event dates:', Object.keys(eventsByDate));
+        
         for (let i = 0; i < daysToShow; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
             const dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            
+            const hasEvents = eventsByDate[dateKey] && eventsByDate[dateKey].length > 0;
+            const events = eventsByDate[dateKey] || [];
+            
+            console.log('Day', i + 1, 'dateKey:', dateKey, 'hasEvents:', hasEvents, 'eventCount:', events.length);
+            
             days.push({
                 date,
                 dateKey,
-                hasEvents: eventsByDate[dateKey] && eventsByDate[dateKey].length > 0,
-                events: eventsByDate[dateKey] || []
+                hasEvents,
+                events
             });
         }
         return `
@@ -289,9 +313,14 @@ class NewTabPage {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
         
+        console.log('Grouping events:', events.length, 'events');
+        console.log('Today:', today.toISOString());
+        
         events.forEach(event => {
             const startDate = new Date(event.start.dateTime || event.start.date);
             const endDate = new Date(event.end.dateTime || event.end.date);
+            
+            console.log('Processing event:', event.summary, 'start:', startDate.toISOString(), 'end:', endDate.toISOString());
             
             // For all-day events, the end date is exclusive, so we need to adjust
             if (event.start.date) {
@@ -310,6 +339,9 @@ class NewTabPage {
                                   String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
                                   String(currentDate.getDate()).padStart(2, '0');
                     eventDates.push(dateKey);
+                    console.log('Added date key:', dateKey);
+                } else {
+                    console.log('Skipped date:', currentDate.toISOString(), 'because it\'s before today');
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
             }
@@ -611,12 +643,14 @@ class GoogleCalendarService {
         const endDate = new Date();
         endDate.setDate(now.getDate() + days);
 
+        console.log('Fetching events for', days, 'days from', now.toISOString(), 'to', endDate.toISOString());
+
         const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
             `timeMin=${now.toISOString()}&` +
             `timeMax=${endDate.toISOString()}&` +
             `singleEvents=true&` +
             `orderBy=startTime&` +
-            `maxResults=100`;
+            `maxResults=1000`;
 
         const response = await fetch(url, {
             headers: {
@@ -630,6 +664,7 @@ class GoogleCalendarService {
         }
 
         const data = await response.json();
+        console.log('Google Calendar API returned', data.items ? data.items.length : 0, 'events');
         return data.items || [];
     }
 }

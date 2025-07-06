@@ -4,6 +4,7 @@ class NewTabApp {
         this.calendarService = new CalendarService();
         this.calendarRenderer = new CalendarRenderer();
         this.settingsModal = new SettingsModal(this.settingsService);
+        this.widgetResizeService = new WidgetResizeService();
         
         this.currentDays = 7;
         this.isTraditionalView = true;
@@ -22,6 +23,12 @@ class NewTabApp {
         // Setup UI components
         this.setupEventListeners();
         this.updateTime();
+        
+        // Initialize widget resize functionality
+        this.widgetResizeService.init();
+        
+        // Make widget resize service globally accessible
+        window.widgetResizeService = this.widgetResizeService;
         
         // Load calendar data
         await this.loadCalendar();

@@ -42,6 +42,14 @@ class SettingsModal {
         expandCalendarDaysToggle.addEventListener('change', (e) => {
             this.onExpandCalendarDaysToggle(e.target.checked);
         });
+
+        // Reset widget dimensions button
+        const resetWidgetDimensionsBtn = document.getElementById('resetWidgetDimensions');
+        if (resetWidgetDimensionsBtn) {
+            resetWidgetDimensionsBtn.addEventListener('click', () => {
+                this.onResetWidgetDimensions();
+            });
+        }
     }
 
     open() {
@@ -74,6 +82,23 @@ class SettingsModal {
         document.dispatchEvent(new CustomEvent('settingsChanged', {
             detail: { expandCalendarDays }
         }));
+    }
+
+    async onResetWidgetDimensions() {
+        try {
+            // Reset all widget dimensions
+            const widgets = document.querySelectorAll('.widget');
+            widgets.forEach(widget => {
+                if (window.widgetResizeService) {
+                    window.widgetResizeService.resetWidgetDimensions(widget.id);
+                }
+            });
+            
+            // Reload the page to apply changes
+            window.location.reload();
+        } catch (error) {
+            console.error('Error resetting widget dimensions:', error);
+        }
     }
 
     async loadSettings() {

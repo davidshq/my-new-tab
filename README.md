@@ -173,6 +173,14 @@ To debug the extension:
 3. Click "inspect views: newtab" to open DevTools
 4. Check the console for any error messages
 
+## Features
+
+### Widget Resizing
+- **Resizable Widgets**: All widgets can be resized by dragging the resize handles in the corners
+- **Persistent Sizes**: Widget dimensions are automatically saved and restored
+- **Multiple Resize Handles**: Use any corner handle to resize from that direction
+- **Reset Functionality**: Reset all widgets to default size via Settings
+
 ## Future Features
 
 - [ ] Multiple calendar support

@@ -373,6 +373,11 @@ body {
     font-size: 1.1rem;
 }
 
+.calendar-day-cell.expanded {
+    min-height: auto;
+    height: auto;
+}
+
 .calendar-day-cell:hover {
     background: #f8f9fa;
 }
@@ -416,6 +421,11 @@ body {
     flex-direction: column;
     gap: 0.25rem;
     overflow: hidden;
+}
+
+.calendar-day-events.expanded {
+    overflow: visible;
+    max-height: none;
 }
 
 .calendar-event-item {

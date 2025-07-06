@@ -8,6 +8,7 @@ class NewTabApp {
         this.currentDays = 7;
         this.isTraditionalView = true;
         this.useSampleData = false;
+        this.expandCalendarDays = false;
         
         this.init();
     }
@@ -37,6 +38,7 @@ class NewTabApp {
             this.currentDays = settings.calendarDays;
             this.isTraditionalView = settings.calendarView;
             this.useSampleData = settings.useSampleData;
+            this.expandCalendarDays = settings.expandCalendarDays;
             
             // Update UI to reflect settings
             this.updateUIFromSettings();
@@ -61,6 +63,12 @@ class NewTabApp {
         const useSampleDataToggle = document.getElementById('useSampleData');
         if (useSampleDataToggle) {
             useSampleDataToggle.checked = this.useSampleData;
+        }
+        
+        // Update expand calendar days toggle
+        const expandCalendarDaysToggle = document.getElementById('expandCalendarDays');
+        if (expandCalendarDaysToggle) {
+            expandCalendarDaysToggle.checked = this.expandCalendarDays;
         }
     }
 
@@ -95,7 +103,12 @@ class NewTabApp {
 
         // Listen for settings changes from modal
         document.addEventListener('settingsChanged', (e) => {
-            this.useSampleData = e.detail.useSampleData;
+            if (e.detail.useSampleData !== undefined) {
+                this.useSampleData = e.detail.useSampleData;
+            }
+            if (e.detail.expandCalendarDays !== undefined) {
+                this.expandCalendarDays = e.detail.expandCalendarDays;
+            }
             this.loadCalendar();
         });
     }
@@ -105,7 +118,8 @@ class NewTabApp {
             await this.settingsService.saveSettings({
                 calendarDays: this.currentDays,
                 calendarView: this.isTraditionalView,
-                useSampleData: this.useSampleData
+                useSampleData: this.useSampleData,
+                expandCalendarDays: this.expandCalendarDays
             });
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -125,7 +139,7 @@ class NewTabApp {
             console.log('Loaded', events.length, 'events');
             
             // Update renderer config
-            this.calendarRenderer.setConfig(this.currentDays, this.isTraditionalView);
+            this.calendarRenderer.setConfig(this.currentDays, this.isTraditionalView, this.expandCalendarDays);
             
             // Render calendar
             this.calendarRenderer.renderCalendar(events, 'calendarContent');

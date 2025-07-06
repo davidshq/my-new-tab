@@ -2,11 +2,13 @@ class CalendarRenderer {
     constructor() {
         this.currentDays = 7;
         this.isTraditionalView = true;
+        this.expandCalendarDays = false;
     }
 
-    setConfig(days, isTraditionalView) {
+    setConfig(days, isTraditionalView, expandCalendarDays = false) {
         this.currentDays = days;
         this.isTraditionalView = isTraditionalView;
+        this.expandCalendarDays = expandCalendarDays;
     }
 
     renderCalendar(events, containerId) {
@@ -73,16 +75,26 @@ class CalendarRenderer {
         
         let eventsHTML = '';
         if (hasEvents) {
-            eventsHTML = `
-                <div class="calendar-day-events">
-                    ${events.slice(0, 2).map(event => this.renderCalendarEvent(event, dateKey)).join('')}
-                    ${events.length > 2 ? `<div class="more-events">+${events.length - 2} more</div>` : ''}
-                </div>
-            `;
+            if (this.expandCalendarDays) {
+                // Show all events when expandCalendarDays is enabled
+                eventsHTML = `
+                    <div class="calendar-day-events expanded">
+                        ${events.map(event => this.renderCalendarEvent(event, dateKey)).join('')}
+                    </div>
+                `;
+            } else {
+                // Show only first 2 events and "+x more" when expandCalendarDays is disabled
+                eventsHTML = `
+                    <div class="calendar-day-events">
+                        ${events.slice(0, 2).map(event => this.renderCalendarEvent(event, dateKey)).join('')}
+                        ${events.length > 2 ? `<div class="more-events">+${events.length - 2} more</div>` : ''}
+                    </div>
+                `;
+            }
         }
 
         return `
-            <div class="calendar-day-cell ${isToday ? 'today' : ''} ${!isCurrentMonth ? 'other-month' : ''} ${hasEvents ? 'has-events' : ''}">
+            <div class="calendar-day-cell ${isToday ? 'today' : ''} ${!isCurrentMonth ? 'other-month' : ''} ${hasEvents ? 'has-events' : ''} ${this.expandCalendarDays ? 'expanded' : ''}">
                 <div class="calendar-day-header">
                     <div class="calendar-day-number">${dayNumber}</div>
                     <div class="calendar-day-name">${dayName}</div>

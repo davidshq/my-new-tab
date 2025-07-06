@@ -3,7 +3,8 @@ const AppConfig = {
     DEFAULT_SETTINGS: {
         calendarDays: 7,
         calendarView: true, // true = traditional view, false = agenda view
-        useSampleData: false
+        useSampleData: false,
+        expandCalendarDays: false // true = show all events, false = show +x events
     },
 
     // Calendar options

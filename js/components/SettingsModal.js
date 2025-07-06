@@ -14,6 +14,7 @@ class SettingsModal {
         const settingsBtn = document.getElementById('settingsBtn');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const useSampleDataToggle = document.getElementById('useSampleData');
+        const expandCalendarDaysToggle = document.getElementById('expandCalendarDays');
 
         settingsBtn.addEventListener('click', () => this.open());
         closeSettingsBtn.addEventListener('click', () => this.close());
@@ -35,6 +36,11 @@ class SettingsModal {
         // Sample data toggle
         useSampleDataToggle.addEventListener('change', (e) => {
             this.onSampleDataToggle(e.target.checked);
+        });
+
+        // Expand calendar days toggle
+        expandCalendarDaysToggle.addEventListener('change', (e) => {
+            this.onExpandCalendarDaysToggle(e.target.checked);
         });
     }
 
@@ -60,10 +66,21 @@ class SettingsModal {
         }));
     }
 
+    async onExpandCalendarDaysToggle(expandCalendarDays) {
+        console.log('Expand calendar days toggle changed to:', expandCalendarDays);
+        await this.settingsService.updateSetting('expandCalendarDays', expandCalendarDays);
+        
+        // Dispatch custom event for other components to listen to
+        document.dispatchEvent(new CustomEvent('settingsChanged', {
+            detail: { expandCalendarDays }
+        }));
+    }
+
     async loadSettings() {
         try {
             const settings = await this.settingsService.loadSettings();
             document.getElementById('useSampleData').checked = settings.useSampleData;
+            document.getElementById('expandCalendarDays').checked = settings.expandCalendarDays;
             console.log('Settings loaded in modal:', settings);
         } catch (error) {
             console.error('Error loading settings in modal:', error);

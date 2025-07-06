@@ -10,6 +10,7 @@ class NewTabApp {
         this.isTraditionalView = true;
         this.useSampleData = false;
         this.expandCalendarDays = false;
+        this.daysPerRow = 4;
         
         this.init();
     }
@@ -46,6 +47,7 @@ class NewTabApp {
             this.isTraditionalView = settings.calendarView;
             this.useSampleData = settings.useSampleData;
             this.expandCalendarDays = settings.expandCalendarDays;
+            this.daysPerRow = settings.daysPerRow;
             
             // Update UI to reflect settings
             this.updateUIFromSettings();
@@ -76,6 +78,12 @@ class NewTabApp {
         const expandCalendarDaysToggle = document.getElementById('expandCalendarDays');
         if (expandCalendarDaysToggle) {
             expandCalendarDaysToggle.checked = this.expandCalendarDays;
+        }
+        
+        // Update days per row select
+        const daysPerRowSelect = document.getElementById('daysPerRow');
+        if (daysPerRowSelect) {
+            daysPerRowSelect.value = this.daysPerRow;
         }
     }
 
@@ -116,6 +124,9 @@ class NewTabApp {
             if (e.detail.expandCalendarDays !== undefined) {
                 this.expandCalendarDays = e.detail.expandCalendarDays;
             }
+            if (e.detail.daysPerRow !== undefined) {
+                this.daysPerRow = e.detail.daysPerRow;
+            }
             this.loadCalendar();
         });
     }
@@ -126,7 +137,8 @@ class NewTabApp {
                 calendarDays: this.currentDays,
                 calendarView: this.isTraditionalView,
                 useSampleData: this.useSampleData,
-                expandCalendarDays: this.expandCalendarDays
+                expandCalendarDays: this.expandCalendarDays,
+                daysPerRow: this.daysPerRow
             });
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -146,7 +158,7 @@ class NewTabApp {
             console.log('Loaded', events.length, 'events');
             
             // Update renderer config
-            this.calendarRenderer.setConfig(this.currentDays, this.isTraditionalView, this.expandCalendarDays);
+            this.calendarRenderer.setConfig(this.currentDays, this.isTraditionalView, this.expandCalendarDays, this.daysPerRow);
             
             // Render calendar
             this.calendarRenderer.renderCalendar(events, 'calendarContent');

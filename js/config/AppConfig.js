@@ -4,11 +4,13 @@ const AppConfig = {
         calendarDays: 7,
         calendarView: true, // true = traditional view, false = agenda view
         useSampleData: false,
-        expandCalendarDays: false // true = show all events, false = show +x events
+        expandCalendarDays: false, // true = show all events, false = show +x events
+        daysPerRow: 4 // number of days to show per row
     },
 
     // Calendar options
     CALENDAR_DAYS_OPTIONS: [7, 10, 14, 20, 30],
+    DAYS_PER_ROW_OPTIONS: [2, 3, 4, 5, 6, 7],
     
     // API settings
     GOOGLE_CALENDAR_API: {

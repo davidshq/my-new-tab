@@ -43,6 +43,14 @@ class SettingsModal {
             this.onExpandCalendarDaysToggle(e.target.checked);
         });
 
+        // Days per row select
+        const daysPerRowSelect = document.getElementById('daysPerRow');
+        if (daysPerRowSelect) {
+            daysPerRowSelect.addEventListener('change', (e) => {
+                this.onDaysPerRowChange(parseInt(e.target.value));
+            });
+        }
+
         // Reset widget dimensions button
         const resetWidgetDimensionsBtn = document.getElementById('resetWidgetDimensions');
         if (resetWidgetDimensionsBtn) {
@@ -84,6 +92,16 @@ class SettingsModal {
         }));
     }
 
+    async onDaysPerRowChange(daysPerRow) {
+        console.log('Days per row changed to:', daysPerRow);
+        await this.settingsService.updateSetting('daysPerRow', daysPerRow);
+        
+        // Dispatch custom event for other components to listen to
+        document.dispatchEvent(new CustomEvent('settingsChanged', {
+            detail: { daysPerRow }
+        }));
+    }
+
     async onResetWidgetDimensions() {
         try {
             // Reset all widget dimensions
@@ -106,6 +124,7 @@ class SettingsModal {
             const settings = await this.settingsService.loadSettings();
             document.getElementById('useSampleData').checked = settings.useSampleData;
             document.getElementById('expandCalendarDays').checked = settings.expandCalendarDays;
+            document.getElementById('daysPerRow').value = settings.daysPerRow;
             console.log('Settings loaded in modal:', settings);
         } catch (error) {
             console.error('Error loading settings in modal:', error);

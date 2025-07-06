@@ -4,7 +4,8 @@ class SettingsService {
             calendarDays: 7,
             calendarView: true, // true = traditional view, false = agenda view
             useSampleData: false,
-            expandCalendarDays: false // true = show all events, false = show +x events
+            expandCalendarDays: false, // true = show all events, false = show +x events
+            daysPerRow: 4 // number of days to show per row
         };
     }
 

@@ -3,12 +3,14 @@ class CalendarRenderer {
         this.currentDays = 7;
         this.isTraditionalView = true;
         this.expandCalendarDays = false;
+        this.daysPerRow = 4;
     }
 
-    setConfig(days, isTraditionalView, expandCalendarDays = false) {
+    setConfig(days, isTraditionalView, expandCalendarDays = false, daysPerRow = 4) {
         this.currentDays = days;
         this.isTraditionalView = isTraditionalView;
         this.expandCalendarDays = expandCalendarDays;
+        this.daysPerRow = daysPerRow;
     }
 
     renderCalendar(events, containerId) {
@@ -56,11 +58,20 @@ class CalendarRenderer {
                 events
             });
         }
+
+        // Split days into rows based on daysPerRow setting
+        const rows = [];
+        for (let i = 0; i < days.length; i += this.daysPerRow) {
+            rows.push(days.slice(i, i + this.daysPerRow));
+        }
+
         return `
-            <div class="traditional-calendar single-row-calendar">
-                <div class="calendar-days-row">
-                    ${days.map(dayData => this.renderCalendarDay(dayData)).join('')}
-                </div>
+            <div class="traditional-calendar">
+                ${rows.map(row => `
+                    <div class="calendar-days-row" style="grid-template-columns: repeat(${this.daysPerRow}, 1fr);">
+                        ${row.map(dayData => this.renderCalendarDay(dayData)).join('')}
+                    </div>
+                `).join('')}
             </div>
         `;
     }

@@ -1,19 +1,31 @@
 # My New Tab - Chrome Extension
 
-A beautiful and customizable new tab Chrome extension that displays your Google Calendar events with a modern, clean interface.
+A customizable new tab page with widgets including Google Calendar and Google Keep integration.
 
 ## Features
 
-- **Google Calendar Integration**: View your upcoming calendar events directly on your new tab page
+- **Google Calendar Integration**: View your upcoming events with a beautiful, responsive interface
+- **Google Keep Integration**: Access your Keep notes with OAuth 2.0 authentication
+- **Multiple Calendar Views**: Toggle between traditional calendar and agenda views
+- **Responsive Design**: Works perfectly on all screen sizes
+- **Customizable Settings**: Adjust calendar days and other preferences
+- **Sample Data Mode**: Test the extension with sample calendar data
 - **Settings Page**: Accessible settings modal with toggle controls
-- **Sample Data Mode**: Test the extension with realistic sample calendar events
-- **Customizable Time Range**: Choose to display events for 7, 10, 14, 20, or 30 days
-- **Modern UI**: Clean, responsive design with smooth animations and hover effects
 - **Real-time Updates**: Time display updates every minute
 - **Settings Persistence**: Your preferences are saved and restored across sessions
 - **Mobile Responsive**: Works great on all screen sizes
 
+## Architecture
+
+This extension uses a hybrid authentication approach:
+
+- **Google Calendar**: Uses Chrome's Identity API (GIS) for direct authentication
+- **Google Keep**: Uses OAuth 2.0 flow through a Cloudflare Workers backend
+
+This architecture allows secure access to both services while keeping secrets safe.
+
 ## Screenshots
+
 ## Traditional View
 ![Traditional View of Calendar](/screenshots/calendar-view.png)
 
@@ -22,38 +34,41 @@ A beautiful and customizable new tab Chrome extension that displays your Google 
 
 ## Setup Instructions
 
-### 1. Google Cloud Console Setup
+### 1. Chrome Extension Setup
 
-Before using the extension, you need to set up Google Calendar API access:
+1. Clone this repository
+2. Update the `backendUrl` in `newtab.js` to point to your deployed Cloudflare Worker
+3. Replace `{{REPLACE_WITH_CLIENT_ID}}` in `manifest.template.json` with your Google OAuth Client ID
+4. Load the extension in Chrome:
+   - Open Chrome and go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked" and select the extension directory
+
+### 2. Backend Server Setup
+
+The extension requires a Cloudflare Workers backend for Google Keep OAuth. See the [backend documentation](./my-new-tab-server/README.md) for setup instructions.
+
+### 3. Google Cloud Console Setup
 
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select an existing one
-3. Enable the Google Calendar API:
-   - Go to "APIs & Services" > "Library"
-   - Search for "Google Calendar API"
-   - Click on it and press "Enable"
-4. Create OAuth 2.0 credentials:
-   - Go to "APIs & Services" > "Credentials"
-   - Click "Create Credentials" > "OAuth 2.0 Client IDs"
-   - Choose "Chrome Extension" as the application type
-   - Enter your extension ID (you'll get this after loading the extension)
-   - Download the client configuration
+3. Enable the Google Calendar API and Google Keep API
+4. Create OAuth 2.0 credentials for both the extension and backend
 
-### 2. Extension Installation
+## Usage
 
-1. Open Chrome and go to `chrome://extensions/`
-2. Enable "Developer mode" in the top right
-3. Click "Load unpacked" and select the extension folder
-4. Copy the extension ID from the extensions page
-5. Update the `client_id` in `manifest.json` with your Google OAuth client ID
-6. Reload the extension
+### Calendar Widget
 
-### 3. Authentication
+- **View Toggle**: Switch between traditional calendar and agenda views
+- **Days Selector**: Choose how many upcoming days to display (7-30 days)
+- **Refresh Button**: Manually refresh calendar data
+- **Sample Data**: Toggle between real and sample data for testing
 
-1. Open a new tab to see the extension in action
-2. Click the calendar widget - it will prompt you to authenticate with Google
-3. Grant the necessary permissions for calendar access
-4. Your calendar events will now be displayed!
+### Keep Widget
+
+- **Authentication**: Click the authenticate button to connect to Google Keep
+- **Notes Display**: View your Keep notes with color coding and pin indicators
+- **Refresh**: Manually refresh your Keep notes
 
 ## Settings
 

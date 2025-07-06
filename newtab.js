@@ -1,6 +1,7 @@
 class NewTabPage {
     constructor() {
         this.calendarService = new GoogleCalendarService();
+        this.keepService = new GoogleKeepService();
         this.currentDays = 7;
         this.isTraditionalView = true; // Default to traditional view
         this.useSampleData = false; // Default to real data
@@ -8,14 +9,11 @@ class NewTabPage {
     }
 
     async init() {
-        console.log('Initializing NewTabPage...');
         this.updateTime();
         this.setupEventListeners();
-        console.log('Loading settings...');
-        await this.loadSettings();
-        console.log('Settings loaded, loading calendar...');
+        this.loadSettings();
         await this.loadCalendar();
-        console.log('Initialization complete');
+        await this.loadKeep();
         
         // Update time every minute
         setInterval(() => this.updateTime(), 60000);
@@ -89,10 +87,21 @@ class NewTabPage {
         // Sample data toggle
         const useSampleDataToggle = document.getElementById('useSampleData');
         useSampleDataToggle.addEventListener('change', (e) => {
-            console.log('Sample data toggle changed to:', e.target.checked);
             this.useSampleData = e.target.checked;
             this.saveSettings();
             this.loadCalendar();
+        });
+
+        // Keep authentication button
+        const keepAuthBtn = document.getElementById('keepAuthBtn');
+        keepAuthBtn.addEventListener('click', () => {
+            this.authenticateKeep();
+        });
+
+        // Keep refresh button
+        const keepRefreshBtn = document.getElementById('keepRefreshBtn');
+        keepRefreshBtn.addEventListener('click', () => {
+            this.loadKeep();
         });
     }
 
@@ -111,8 +120,6 @@ class NewTabPage {
     async loadSettings() {
         try {
             const result = await chrome.storage.sync.get(['calendarDays', 'calendarView', 'useSampleData']);
-            console.log('Loaded settings:', result);
-            
             if (result.calendarDays) {
                 this.currentDays = result.calendarDays;
                 document.getElementById('daysSelect').value = this.currentDays;
@@ -123,7 +130,6 @@ class NewTabPage {
             if (result.useSampleData !== undefined) {
                 this.useSampleData = result.useSampleData;
                 document.getElementById('useSampleData').checked = this.useSampleData;
-                console.log('Set useSampleData to:', this.useSampleData);
             }
             this.updateViewToggleIcon();
         } catch (error) {
@@ -147,18 +153,12 @@ class NewTabPage {
         const calendarContent = document.getElementById('calendarContent');
         calendarContent.innerHTML = '<div class="loading">Loading calendar...</div>';
 
-        console.log('Loading calendar with useSampleData:', this.useSampleData);
-
         try {
             let events;
             if (this.useSampleData) {
-                console.log('Generating sample events...');
                 events = this.generateSampleEvents();
-                console.log('Generated', events.length, 'sample events');
             } else {
-                console.log('Fetching real calendar events...');
                 events = await this.calendarService.getEvents(this.currentDays);
-                console.log('Fetched', events.length, 'real events');
             }
             this.renderCalendar(events);
         } catch (error) {
@@ -207,25 +207,15 @@ class NewTabPage {
         const daysToShow = this.currentDays;
         const today = new Date();
         const days = [];
-        
-        console.log('Rendering traditional calendar for', daysToShow, 'days');
-        console.log('Available event dates:', Object.keys(eventsByDate));
-        
         for (let i = 0; i < daysToShow; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
             const dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-            
-            const hasEvents = eventsByDate[dateKey] && eventsByDate[dateKey].length > 0;
-            const events = eventsByDate[dateKey] || [];
-            
-            console.log('Day', i + 1, 'dateKey:', dateKey, 'hasEvents:', hasEvents, 'eventCount:', events.length);
-            
             days.push({
                 date,
                 dateKey,
-                hasEvents,
-                events
+                hasEvents: eventsByDate[dateKey] && eventsByDate[dateKey].length > 0,
+                events: eventsByDate[dateKey] || []
             });
         }
         return `
@@ -313,14 +303,9 @@ class NewTabPage {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
         
-        console.log('Grouping events:', events.length, 'events');
-        console.log('Today:', today.toISOString());
-        
         events.forEach(event => {
             const startDate = new Date(event.start.dateTime || event.start.date);
             const endDate = new Date(event.end.dateTime || event.end.date);
-            
-            console.log('Processing event:', event.summary, 'start:', startDate.toISOString(), 'end:', endDate.toISOString());
             
             // For all-day events, the end date is exclusive, so we need to adjust
             if (event.start.date) {
@@ -339,9 +324,6 @@ class NewTabPage {
                                   String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
                                   String(currentDate.getDate()).padStart(2, '0');
                     eventDates.push(dateKey);
-                    console.log('Added date key:', dateKey);
-                } else {
-                    console.log('Skipped date:', currentDate.toISOString(), 'because it\'s before today');
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
             }
@@ -602,6 +584,113 @@ class NewTabPage {
             return new Date(aTime) - new Date(bTime);
         });
     }
+
+    async authenticateKeep() {
+        const keepContent = document.getElementById('keepContent');
+        keepContent.innerHTML = '<div class="loading">Authenticating with Google Keep...</div>';
+
+        try {
+            const isAuthenticated = await this.keepService.authenticate();
+            if (isAuthenticated) {
+                await this.loadKeep();
+            } else {
+                keepContent.innerHTML = '<div class="error-message">Authentication failed. Please try again.</div>';
+            }
+        } catch (error) {
+            console.error('Keep authentication error:', error);
+            keepContent.innerHTML = '<div class="error-message">Authentication failed: ' + error.message + '</div>';
+        }
+    }
+
+    async loadKeep() {
+        const keepContent = document.getElementById('keepContent');
+        keepContent.innerHTML = '<div class="loading">Loading Keep notes...</div>';
+
+        try {
+            // Try to load existing tokens first
+            const hasTokens = await this.keepService.loadTokens();
+            
+            if (!hasTokens) {
+                keepContent.innerHTML = '<div class="no-notes">Not authenticated. Click the authenticate button to connect to Google Keep.</div>';
+                return;
+            }
+
+            const notes = await this.keepService.getNotes({ pageSize: 10 });
+            this.renderKeepNotes(notes);
+        } catch (error) {
+            console.error('Error loading Keep notes:', error);
+            if (error.message.includes('Authentication required')) {
+                keepContent.innerHTML = '<div class="no-notes">Not authenticated. Click the authenticate button to connect to Google Keep.</div>';
+            } else {
+                keepContent.innerHTML = '<div class="error-message">Failed to load Keep notes: ' + error.message + '</div>';
+            }
+        }
+    }
+
+    renderKeepNotes(notesData) {
+        const keepContent = document.getElementById('keepContent');
+        
+        if (!notesData.notes || notesData.notes.length === 0) {
+            keepContent.innerHTML = '<div class="no-notes">No notes found in Google Keep.</div>';
+            return;
+        }
+
+        const notesHTML = notesData.notes.map(note => this.renderKeepNote(note)).join('');
+        keepContent.innerHTML = `
+            <div class="keep-notes">
+                ${notesHTML}
+            </div>
+        `;
+    }
+
+    renderKeepNote(note) {
+        const title = note.title || 'Untitled Note';
+        const content = note.textContent || '';
+        const color = note.color || 'default';
+        const isPinned = note.trashed === false && note.pinned === true;
+        
+        // Truncate content for display
+        const truncatedContent = content.length > 100 ? content.substring(0, 100) + '...' : content;
+        
+        return `
+            <div class="keep-note ${color} ${isPinned ? 'pinned' : ''}">
+                <div class="note-header">
+                    <h3 class="note-title">${this.escapeHtml(title)}</h3>
+                    ${isPinned ? '<span class="pin-indicator">📌</span>' : ''}
+                </div>
+                ${content ? `<div class="note-content">${this.escapeHtml(truncatedContent)}</div>` : ''}
+                <div class="note-footer">
+                    <span class="note-date">${this.formatNoteDate(note.userEditedTimestampUsec)}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    formatNoteDate(timestampUsec) {
+        if (!timestampUsec) return '';
+        
+        const timestamp = parseInt(timestampUsec) / 1000000; // Convert microseconds to seconds
+        const date = new Date(timestamp * 1000);
+        
+        const now = new Date();
+        const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        
+        if (diffInDays === 0) {
+            return 'Today';
+        } else if (diffInDays === 1) {
+            return 'Yesterday';
+        } else if (diffInDays < 7) {
+            return diffInDays + ' days ago';
+        } else {
+            return date.toLocaleDateString();
+        }
+    }
 }
 
 class GoogleCalendarService {
@@ -643,8 +732,6 @@ class GoogleCalendarService {
         const endDate = new Date();
         endDate.setDate(now.getDate() + days);
 
-        console.log('Fetching events for', days, 'days from', now.toISOString(), 'to', endDate.toISOString());
-
         const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
             `timeMin=${now.toISOString()}&` +
             `timeMax=${endDate.toISOString()}&` +
@@ -664,8 +751,224 @@ class GoogleCalendarService {
         }
 
         const data = await response.json();
-        console.log('Google Calendar API returned', data.items ? data.items.length : 0, 'events');
         return data.items || [];
+    }
+}
+
+class GoogleKeepService {
+    constructor() {
+        this.backendUrl = 'https://mnt.eccentricquality.com'; // Replace with your actual worker URL
+        this.isAuthenticated = false;
+        this.accessToken = null;
+        this.refreshToken = null;
+        this.tokenExpiry = null;
+    }
+
+    async authenticate() {
+        try {
+            // Check if we have a valid token
+            if (this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
+                this.isAuthenticated = true;
+                return true;
+            }
+
+            // Try to refresh token if we have one
+            if (this.refreshToken) {
+                const refreshed = await this.refreshAccessToken();
+                if (refreshed) {
+                    return true;
+                }
+            }
+
+            // Start OAuth flow
+            return await this.startOAuthFlow();
+        } catch (error) {
+            console.error('Keep authentication error:', error);
+            return false;
+        }
+    }
+
+    async startOAuthFlow() {
+        try {
+            // Get OAuth URL from backend
+            const response = await fetch(`${this.backendUrl}/auth/google?state=${crypto.randomUUID()}`);
+            const data = await response.json();
+
+            if (!data.authUrl) {
+                throw new Error('Failed to get OAuth URL');
+            }
+
+            // Open OAuth popup
+            const popup = window.open(
+                data.authUrl,
+                'google-oauth',
+                'width=500,height=600,scrollbars=yes,resizable=yes'
+            );
+
+            // Wait for OAuth completion
+            return new Promise((resolve, reject) => {
+                const checkClosed = setInterval(() => {
+                    if (popup.closed) {
+                        clearInterval(checkClosed);
+                        reject(new Error('OAuth popup was closed'));
+                    }
+                }, 1000);
+
+                // Listen for message from popup
+                const messageListener = (event) => {
+                    if (event.origin !== this.backendUrl) return;
+                    
+                    if (event.data.type === 'OAUTH_SUCCESS') {
+                        clearInterval(checkClosed);
+                        window.removeEventListener('message', messageListener);
+                        popup.close();
+                        
+                        this.accessToken = event.data.access_token;
+                        this.refreshToken = event.data.refresh_token;
+                        this.tokenExpiry = new Date(Date.now() + (event.data.expires_in * 1000));
+                        this.isAuthenticated = true;
+                        
+                        // Store tokens securely
+                        this.storeTokens();
+                        resolve(true);
+                    } else if (event.data.type === 'OAUTH_ERROR') {
+                        clearInterval(checkClosed);
+                        window.removeEventListener('message', messageListener);
+                        popup.close();
+                        reject(new Error(event.data.error));
+                    }
+                };
+
+                window.addEventListener('message', messageListener);
+            });
+
+        } catch (error) {
+            console.error('OAuth flow error:', error);
+            return false;
+        }
+    }
+
+    async refreshAccessToken() {
+        try {
+            const response = await fetch(`${this.backendUrl}/auth/refresh`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    refresh_token: this.refreshToken,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.accessToken = data.access_token;
+                this.tokenExpiry = new Date(Date.now() + (data.expires_in * 1000));
+                this.isAuthenticated = true;
+                this.storeTokens();
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('Token refresh error:', error);
+            return false;
+        }
+    }
+
+    async getNotes(options = {}) {
+        const isAuthenticated = await this.authenticate();
+        if (!isAuthenticated) {
+            throw new Error('Authentication required for Keep');
+        }
+
+        const params = new URLSearchParams();
+        if (options.pageSize) params.set('pageSize', options.pageSize);
+        if (options.pageToken) params.set('pageToken', options.pageToken);
+        if (options.filter) params.set('filter', options.filter);
+
+        const response = await fetch(`${this.backendUrl}/api/keep/notes?${params}`, {
+            headers: {
+                'Authorization': `Bearer ${this.accessToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Keep API error: ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    async getLabels() {
+        const isAuthenticated = await this.authenticate();
+        if (!isAuthenticated) {
+            throw new Error('Authentication required for Keep');
+        }
+
+        const response = await fetch(`${this.backendUrl}/api/keep/labels`, {
+            headers: {
+                'Authorization': `Bearer ${this.accessToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Keep API error: ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    storeTokens() {
+        // Store tokens in chrome.storage.sync for persistence
+        chrome.storage.sync.set({
+            keepAccessToken: this.accessToken,
+            keepRefreshToken: this.refreshToken,
+            keepTokenExpiry: this.tokenExpiry?.toISOString(),
+        });
+    }
+
+    async loadTokens() {
+        try {
+            const result = await chrome.storage.sync.get([
+                'keepAccessToken',
+                'keepRefreshToken',
+                'keepTokenExpiry',
+            ]);
+
+            if (result.keepAccessToken && result.keepRefreshToken && result.keepTokenExpiry) {
+                this.accessToken = result.keepAccessToken;
+                this.refreshToken = result.keepRefreshToken;
+                this.tokenExpiry = new Date(result.keepTokenExpiry);
+                
+                // Check if token is still valid
+                if (new Date() < this.tokenExpiry) {
+                    this.isAuthenticated = true;
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (error) {
+            console.error('Error loading tokens:', error);
+            return false;
+        }
+    }
+
+    async logout() {
+        this.accessToken = null;
+        this.refreshToken = null;
+        this.tokenExpiry = null;
+        this.isAuthenticated = false;
+        
+        await chrome.storage.sync.remove([
+            'keepAccessToken',
+            'keepRefreshToken',
+            'keepTokenExpiry',
+        ]);
     }
 }
 

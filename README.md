@@ -175,11 +175,11 @@ To debug the extension:
 
 ## Future Features
 
-- [ ] Google Keep widget integration
 - [ ] Multiple calendar support
 - [ ] Weather widget
 - [ ] Drag-and-drop widget reordering
 - [ ] Create, edit, delete calendar events
+- [ ] Note taking widget
 
 ## Contributing
 

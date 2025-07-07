@@ -117,7 +117,7 @@ If you are contributing to this project, please do not commit your client ID to 
 my-new-tab/
 ├── manifest.json          # Extension configuration
 ├── newtab.html           # Main new tab page
-├── newtab.js             # JavaScript functionality
+├── js/app/NewTabApp.js   # Main application (modular structure)
 ├── styles.css            # CSS styling
 ├── icons/                # Extension icons
 └── README.md             # This file
@@ -136,8 +136,8 @@ You can customize the extension by modifying:
 
 - **Time Range Options**: Edit the `<select>` options in `newtab.html`
 - **Styling**: Modify `styles.css` to change colors, fonts, and layout
-- **Calendar Display**: Update the rendering logic in `newtab.js`
-- **Sample Events**: Modify the `generateSampleEvents()` method in `newtab.js`
+- **Calendar Display**: Update the rendering logic in `js/components/CalendarRenderer.js`
+- **Sample Events**: Modify the `generateSampleEvents()` method in `js/app/NewTabApp.js`
 
 ## Troubleshooting
 
@@ -172,6 +172,14 @@ To debug the extension:
 2. Find your extension and click "Details"
 3. Click "inspect views: newtab" to open DevTools
 4. Check the console for any error messages
+
+## Features
+
+### Widget Resizing
+- **Resizable Widgets**: All widgets can be resized by dragging the resize handles in the corners
+- **Persistent Sizes**: Widget dimensions are automatically saved and restored
+- **Multiple Resize Handles**: Use any corner handle to resize from that direction
+- **Reset Functionality**: Reset all widgets to default size via Settings
 
 ## Future Features
 

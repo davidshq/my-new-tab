@@ -1,8 +1,36 @@
+/**
+ * Service class for managing calendar operations.
+ * Handles event retrieval, grouping, and sample data generation.
+ * 
+ * @class CalendarService
+ * @description Provides a unified interface for calendar operations
+ * including real Google Calendar integration and sample data generation.
+ */
 class CalendarService {
+    /**
+     * Initializes a new CalendarService instance.
+     * Sets up the Google Calendar service integration.
+     * 
+     * @constructor
+     * @description Creates a new CalendarService instance with
+     * Google Calendar service integration.
+     */
     constructor() {
         this.googleCalendarService = new GoogleCalendarService();
     }
 
+    /**
+     * Retrieves calendar events based on configuration.
+     * Fetches real events or generates sample data as needed.
+     * 
+     * @async
+     * @method getEvents
+     * @param {number} days - Number of days to fetch events for
+     * @param {boolean} useSampleData - Whether to use sample data instead of real events
+     * @returns {Promise<Array>} Array of calendar events
+     * @description Retrieves calendar events either from Google Calendar
+     * or generates sample data based on the useSampleData parameter.
+     */
     async getEvents(days, useSampleData = false) {
         if (useSampleData) {
             return this.generateSampleEvents(days);
@@ -10,6 +38,16 @@ class CalendarService {
         return await this.googleCalendarService.getEvents(days);
     }
 
+    /**
+     * Groups calendar events by date.
+     * Organizes events into a date-keyed object for easier rendering.
+     * 
+     * @method groupEventsByDate
+     * @param {Array} events - Array of calendar events
+     * @returns {Object} Events grouped by date key (YYYY-MM-DD format)
+     * @description Groups events by their occurrence date, handling multi-day
+     * events and sorting events within each date by start time.
+     */
     groupEventsByDate(events) {
         const grouped = {};
         const now = new Date();
@@ -60,6 +98,16 @@ class CalendarService {
         return grouped;
     }
 
+    /**
+     * Generates sample calendar events for testing and demonstration.
+     * Creates realistic sample data when real calendar is not available.
+     * 
+     * @method generateSampleEvents
+     * @param {number} days - Number of days to generate events for
+     * @returns {Array} Array of sample calendar events
+     * @description Generates a set of realistic sample calendar events
+     * for testing and demonstration purposes.
+     */
     generateSampleEvents(days) {
         const events = [];
         const today = new Date();
@@ -177,11 +225,37 @@ class CalendarService {
     }
 }
 
+/**
+ * Service class for interacting with Google Calendar API.
+ * Handles authentication and event retrieval from Google Calendar.
+ * 
+ * @class GoogleCalendarService
+ * @description Provides methods for authenticating with Google Calendar
+ * and retrieving calendar events through the Google Calendar API.
+ */
 class GoogleCalendarService {
+    /**
+     * Initializes a new GoogleCalendarService instance.
+     * Sets up the authentication state.
+     * 
+     * @constructor
+     * @description Creates a new GoogleCalendarService instance with
+     * initial authentication state set to false.
+     */
     constructor() {
         this.isAuthenticated = false;
     }
 
+    /**
+     * Authenticates with Google Calendar API.
+     * Attempts to get an auth token and updates authentication state.
+     * 
+     * @async
+     * @method authenticate
+     * @returns {Promise<boolean>} True if authentication successful, false otherwise
+     * @description Attempts to authenticate with Google Calendar API using
+     * Chrome identity API and updates the authentication state.
+     */
     async authenticate() {
         try {
             const token = await this.getAuthToken();
@@ -193,6 +267,16 @@ class GoogleCalendarService {
         }
     }
 
+    /**
+     * Gets an authentication token from Chrome identity API.
+     * Requests user authorization for Google Calendar access.
+     * 
+     * @async
+     * @method getAuthToken
+     * @returns {Promise<string>} Authentication token for Google Calendar API
+     * @description Requests an authentication token from Chrome identity API
+     * for accessing Google Calendar services.
+     */
     async getAuthToken() {
         return new Promise((resolve, reject) => {
             chrome.identity.getAuthToken({ interactive: true }, (token) => {
@@ -205,6 +289,17 @@ class GoogleCalendarService {
         });
     }
 
+    /**
+     * Retrieves calendar events from Google Calendar API.
+     * Fetches events for the specified number of days from today.
+     * 
+     * @async
+     * @method getEvents
+     * @param {number} days - Number of days to fetch events for (default: 7)
+     * @returns {Promise<Array>} Array of calendar events
+     * @description Fetches calendar events from Google Calendar API for
+     * the specified number of days starting from today.
+     */
     async getEvents(days = 7) {
         const isAuthenticated = await this.authenticate();
         if (!isAuthenticated) {

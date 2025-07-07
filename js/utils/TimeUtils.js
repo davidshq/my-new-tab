@@ -128,6 +128,167 @@ class TimeUtils {
     }
 
     /**
+     * Formats an event's time range with multi-day support.
+     * Handles events that span multiple days with proper formatting.
+     * 
+     * @static
+     * @method formatEventTimeRangeMultiDay
+     * @param {Object} event - Calendar event object
+     * @param {string} currentDateString - Current date string for context
+     * @returns {string} Formatted time range string for the event
+     * @description Formats the time range of an event with support for
+     * multi-day events, showing appropriate time information.
+     */
+    static formatEventTimeRangeMultiDay(event, currentDateString) {
+        const startTime = new Date(event.start.dateTime || event.start.date);
+        const endTime = new Date(event.end.dateTime || event.end.date);
+        
+        // For all-day events, the end date is exclusive, so we need to adjust
+        if (event.start.date) {
+            endTime.setDate(endTime.getDate() - 1);
+        }
+        
+        // Parse current date to compare with event dates
+        const [year, month, day] = currentDateString.split('-');
+        const currentDate = new Date(Number(year), Number(month) - 1, Number(day));
+        
+        let timeString = '';
+        let isFirstDay = false;
+        let isLastDay = false;
+        
+        // Check if this is the first day of a multi-day event
+        if (startTime.getDate() === currentDate.getDate() &&
+            startTime.getMonth() === currentDate.getMonth() &&
+            startTime.getFullYear() === currentDate.getFullYear()) {
+            isFirstDay = true;
+        }
+        
+        // Check if this is the last day of a multi-day event
+        if (endTime.getDate() === currentDate.getDate() &&
+            endTime.getMonth() === currentDate.getMonth() &&
+            endTime.getFullYear() === currentDate.getFullYear()) {
+            isLastDay = true;
+        }
+        
+        if (event.start.date) {
+            // All-day event
+            if (isFirstDay && !isLastDay) {
+                timeString = 'All day';
+            } else if (!isFirstDay && isLastDay) {
+                timeString = 'All day';
+            } else if (isFirstDay && isLastDay) {
+                timeString = 'All day';
+            } else {
+                timeString = 'All day';
+            }
+        } else {
+            // Timed event
+            if (isFirstDay && !isLastDay) {
+                timeString = `${startTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })} - ...`;
+            } else if (!isFirstDay && isLastDay) {
+                timeString = `... - ${endTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })}`;
+            } else if (isFirstDay && isLastDay) {
+                timeString = `${startTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })} - ${endTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })}`;
+            } else {
+                timeString = 'All day';
+            }
+        }
+        
+        return timeString;
+    }
+
+    /**
+     * Formats a time string for display.
+     * Creates a consistent time format across the application.
+     * 
+     * @static
+     * @method formatTime
+     * @param {Date} time - Date object to format
+     * @returns {string} Formatted time string
+     * @description Formats a Date object into a consistent time string
+     * for display purposes.
+     */
+    static formatTime(time) {
+        return time.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    /**
+     * Formats a date string for display.
+     * Creates a consistent date format across the application.
+     * 
+     * @static
+     * @method formatDate
+     * @param {Date} date - Date object to format
+     * @param {Object} options - Formatting options
+     * @returns {string} Formatted date string
+     * @description Formats a Date object into a consistent date string
+     * for display purposes.
+     */
+    static formatDate(date, options = {}) {
+        const defaultOptions = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        
+        return date.toLocaleDateString('en-US', { ...defaultOptions, ...options });
+    }
+
+    /**
+     * Formats a short date string for display.
+     * Creates a compact date format for calendar displays.
+     * 
+     * @static
+     * @method formatShortDate
+     * @param {Date} date - Date object to format
+     * @returns {string} Formatted short date string
+     * @description Formats a Date object into a compact date string
+     * suitable for calendar displays.
+     */
+    static formatShortDate(date) {
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    /**
+     * Formats a short day name for display.
+     * Creates a compact day name format for calendar displays.
+     * 
+     * @static
+     * @method formatShortDayName
+     * @param {Date} date - Date object to format
+     * @returns {string} Formatted short day name
+     * @description Formats a Date object into a compact day name
+     * suitable for calendar displays.
+     */
+    static formatShortDayName(date) {
+        return date.toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
+    /**
      * Converts a Date object to a date key string.
      * Creates a standardized date key format (YYYY-MM-DD).
      * 

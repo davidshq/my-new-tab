@@ -136,8 +136,8 @@ class CalendarRenderer {
      */
     renderCalendarDay(dayData) {
         const { date, dateKey, hasEvents, events } = dayData;
-        const isToday = this.isToday(date);
-        const isCurrentMonth = this.isCurrentMonth(date);
+        const isToday = TimeUtils.isToday(date);
+        const isCurrentMonth = TimeUtils.isCurrentMonth(date);
         
         const dayNumber = date.getDate();
         const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -399,36 +399,8 @@ class CalendarRenderer {
         return grouped;
     }
 
-    /**
-     * Checks if a given date is today.
-     * Compares the date with the current date.
-     * 
-     * @method isToday
-     * @param {Date} date - Date to check
-     * @returns {boolean} True if the date is today, false otherwise
-     * @description Determines if a given date represents today's date.
-     */
-    isToday(date) {
-        const today = new Date();
-        return date.getDate() === today.getDate() &&
-               date.getMonth() === today.getMonth() &&
-               date.getFullYear() === today.getFullYear();
-    }
-
-    /**
-     * Checks if a given date is in the current month.
-     * Compares the month and year with the current date.
-     * 
-     * @method isCurrentMonth
-     * @param {Date} date - Date to check
-     * @returns {boolean} True if the date is in the current month, false otherwise
-     * @description Determines if a given date falls within the current month.
-     */
-    isCurrentMonth(date) {
-        const today = new Date();
-        return date.getMonth() === today.getMonth() &&
-               date.getFullYear() === today.getFullYear();
-    }
+    // Date comparison functions moved to TimeUtils.js
+    // Use TimeUtils.isToday(date) and TimeUtils.isCurrentMonth(date) instead
 
     /**
      * Updates the view toggle icon based on current view mode.

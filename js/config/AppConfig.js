@@ -1,5 +1,23 @@
+/**
+ * Application configuration object.
+ * Contains all configuration constants and settings for the application.
+ * 
+ * @constant {Object} AppConfig
+ * @description Centralized configuration object containing all application
+ * settings, constants, and configuration values.
+ */
 const AppConfig = {
-    // Default settings
+    /**
+     * Default application settings.
+     * Initial values for user preferences and application state.
+     * 
+     * @type {Object}
+     * @property {number} calendarDays - Number of days to display (default: 7)
+     * @property {boolean} calendarView - Whether to use traditional view (default: true)
+     * @property {boolean} useSampleData - Whether to use sample data (default: false)
+     * @property {boolean} expandCalendarDays - Whether to expand calendar days (default: false)
+     * @property {number} daysPerRow - Number of days per row in traditional view (default: 4)
+     */
     DEFAULT_SETTINGS: {
         calendarDays: 7,
         calendarView: true, // true = traditional view, false = agenda view
@@ -8,25 +26,55 @@ const AppConfig = {
         daysPerRow: 4 // number of days to show per row
     },
 
-    // Calendar options
+    /**
+     * Calendar display options.
+     * Available options for calendar configuration.
+     * 
+     * @type {Object}
+     * @property {Array<number>} CALENDAR_DAYS_OPTIONS - Available day count options
+     * @property {Array<number>} DAYS_PER_ROW_OPTIONS - Available days per row options
+     */
     CALENDAR_DAYS_OPTIONS: [7, 10, 14, 20, 30],
     DAYS_PER_ROW_OPTIONS: [2, 3, 4, 5, 6, 7],
     
-    // API settings
+    /**
+     * Google Calendar API configuration.
+     * Settings for Google Calendar API integration.
+     * 
+     * @type {Object}
+     * @property {string} BASE_URL - Google Calendar API base URL
+     * @property {number} MAX_RESULTS - Maximum number of events to retrieve
+     * @property {Array<string>} SCOPES - Required OAuth scopes for API access
+     */
     GOOGLE_CALENDAR_API: {
         BASE_URL: 'https://www.googleapis.com/calendar/v3',
         MAX_RESULTS: 1000,
         SCOPES: ['https://www.googleapis.com/auth/calendar.readonly']
     },
 
-    // UI settings
+    /**
+     * User interface configuration.
+     * Settings for UI behavior and display options.
+     * 
+     * @type {Object}
+     * @property {number} TIME_UPDATE_INTERVAL - Time update interval in milliseconds
+     * @property {number} MAX_EVENTS_PER_DAY - Maximum events to show per day
+     * @property {number} MORE_EVENTS_THRESHOLD - Threshold for showing "+x more" indicator
+     */
     UI: {
         TIME_UPDATE_INTERVAL: 60000, // 1 minute
         MAX_EVENTS_PER_DAY: 2,
         MORE_EVENTS_THRESHOLD: 2
     },
 
-    // Sample events for testing
+    /**
+     * Sample calendar events for testing and demonstration.
+     * Predefined events used when sample data mode is enabled.
+     * 
+     * @type {Array<Object>}
+     * @description Array of sample calendar events with realistic
+     * event data for testing and demonstration purposes.
+     */
     SAMPLE_EVENTS: [
         {
             summary: 'Team Meeting',
@@ -90,7 +138,16 @@ const AppConfig = {
         }
     ],
 
-    // Error messages
+    /**
+     * Error messages for user-facing error handling.
+     * Standardized error messages used throughout the application.
+     * 
+     * @type {Object}
+     * @property {string} AUTHENTICATION_REQUIRED - Message for authentication failures
+     * @property {string} CALENDAR_LOAD_FAILED - Message for calendar loading failures
+     * @property {string} SETTINGS_LOAD_FAILED - Message for settings loading failures
+     * @property {string} SETTINGS_SAVE_FAILED - Message for settings saving failures
+     */
     ERROR_MESSAGES: {
         AUTHENTICATION_REQUIRED: 'Authentication required',
         CALENDAR_LOAD_FAILED: 'Failed to load calendar events. Please try again.',
@@ -98,7 +155,22 @@ const AppConfig = {
         SETTINGS_SAVE_FAILED: 'Error saving settings'
     },
 
-    // DOM element IDs
+    /**
+     * DOM element IDs used throughout the application.
+     * Centralized reference to all element IDs for consistency.
+     * 
+     * @type {Object}
+     * @property {string} TIME_DISPLAY - ID for time display element
+     * @property {string} CALENDAR_CONTENT - ID for calendar content container
+     * @property {string} DAYS_SELECT - ID for days selection dropdown
+     * @property {string} REFRESH_BTN - ID for refresh button
+     * @property {string} VIEW_TOGGLE_BTN - ID for view toggle button
+     * @property {string} VIEW_TOGGLE_ICON - ID for view toggle icon
+     * @property {string} SETTINGS_BTN - ID for settings button
+     * @property {string} CLOSE_SETTINGS_BTN - ID for close settings button
+     * @property {string} SETTINGS_MODAL - ID for settings modal
+     * @property {string} USE_SAMPLE_DATA - ID for sample data toggle
+     */
     ELEMENT_IDS: {
         TIME_DISPLAY: 'timeDisplay',
         CALENDAR_CONTENT: 'calendarContent',

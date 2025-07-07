@@ -1,4 +1,19 @@
+/**
+ * Main New Tab Page class that handles the calendar display and user interactions.
+ * This class manages the calendar view, settings, and Google Calendar integration.
+ * 
+ * @class NewTabPage
+ * @description The primary class for the new tab page functionality, including
+ * calendar rendering, settings management, and user interface interactions.
+ */
 class NewTabPage {
+    /**
+     * Initializes a new NewTabPage instance.
+     * Sets up the calendar service, default settings, and starts the initialization process.
+     * 
+     * @constructor
+     * @description Creates a new NewTabPage instance with default settings and services.
+     */
     constructor() {
         this.calendarService = new GoogleCalendarService();
         this.currentDays = 7;
@@ -7,6 +22,15 @@ class NewTabPage {
         this.init();
     }
 
+    /**
+     * Initializes the new tab page functionality.
+     * Sets up the UI, loads settings, and starts the calendar display.
+     * 
+     * @async
+     * @method init
+     * @description Performs the complete initialization sequence including UI setup,
+     * settings loading, calendar loading, and time updates.
+     */
     async init() {
         console.log('Initializing NewTabPage...');
         this.updateTime();
@@ -21,6 +45,14 @@ class NewTabPage {
         setInterval(() => this.updateTime(), 60000);
     }
 
+    /**
+     * Updates the time and date display in the UI.
+     * Formats the current time and date for display.
+     * 
+     * @method updateTime
+     * @description Updates the time display element with the current time and date
+     * in a user-friendly format.
+     */
     updateTime() {
         const now = new Date();
         const timeString = now.toLocaleTimeString('en-US', {
@@ -38,6 +70,14 @@ class NewTabPage {
         document.getElementById('timeDisplay').textContent = `${timeString} • ${dateString}`;
     }
 
+    /**
+     * Sets up all event listeners for user interactions.
+     * Handles calendar controls, settings, and modal interactions.
+     * 
+     * @method setupEventListeners
+     * @description Configures event listeners for all interactive elements including
+     * dropdowns, buttons, modals, and keyboard shortcuts.
+     */
     setupEventListeners() {
         const daysSelect = document.getElementById('daysSelect');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -96,18 +136,41 @@ class NewTabPage {
         });
     }
 
+    /**
+     * Opens the settings modal dialog.
+     * Displays the settings interface and prevents background scrolling.
+     * 
+     * @method openSettings
+     * @description Shows the settings modal and locks the background scroll.
+     */
     openSettings() {
         const settingsModal = document.getElementById('settingsModal');
         settingsModal.classList.add('show');
         document.body.style.overflow = 'hidden';
     }
 
+    /**
+     * Closes the settings modal dialog.
+     * Hides the settings interface and restores background scrolling.
+     * 
+     * @method closeSettings
+     * @description Hides the settings modal and restores normal scrolling.
+     */
     closeSettings() {
         const settingsModal = document.getElementById('settingsModal');
         settingsModal.classList.remove('show');
         document.body.style.overflow = '';
     }
 
+    /**
+     * Loads user settings from Chrome storage.
+     * Retrieves and applies saved calendar preferences.
+     * 
+     * @async
+     * @method loadSettings
+     * @description Loads all user settings from Chrome sync storage and updates
+     * the UI to reflect the saved preferences.
+     */
     async loadSettings() {
         try {
             const result = await chrome.storage.sync.get(['calendarDays', 'calendarView', 'useSampleData']);
@@ -131,6 +194,15 @@ class NewTabPage {
         }
     }
 
+    /**
+     * Saves current settings to Chrome storage.
+     * Persists user preferences for future sessions.
+     * 
+     * @async
+     * @method saveSettings
+     * @description Saves the current application state to Chrome sync storage
+     * for persistence across browser sessions.
+     */
     async saveSettings() {
         try {
             await chrome.storage.sync.set({ 
@@ -143,6 +215,15 @@ class NewTabPage {
         }
     }
 
+    /**
+     * Loads and displays calendar events.
+     * Fetches events from Google Calendar or generates sample data.
+     * 
+     * @async
+     * @method loadCalendar
+     * @description Loads calendar events based on current settings and renders
+     * them in the appropriate view format.
+     */
     async loadCalendar() {
         const calendarContent = document.getElementById('calendarContent');
         calendarContent.innerHTML = '<div class="loading">Loading calendar...</div>';
@@ -167,6 +248,13 @@ class NewTabPage {
         }
     }
 
+    /**
+     * Updates the view toggle icon based on current view mode.
+     * Changes the icon to reflect traditional or agenda view.
+     * 
+     * @method updateViewToggleIcon
+     * @description Updates the visual indicator for the current calendar view mode.
+     */
     updateViewToggleIcon() {
         const icon = document.getElementById('viewToggleIcon');
         if (this.isTraditionalView) {
@@ -178,6 +266,15 @@ class NewTabPage {
         }
     }
 
+    /**
+     * Renders the calendar with the provided events.
+     * Displays events in either traditional or agenda view format.
+     * 
+     * @method renderCalendar
+     * @param {Array} events - Array of calendar events to display
+     * @description Renders the calendar interface with the provided events,
+     * grouping them by date and applying the current view mode.
+     */
     renderCalendar(events) {
         const calendarContent = document.getElementById('calendarContent');
         
@@ -202,6 +299,16 @@ class NewTabPage {
         }
     }
 
+    /**
+     * Renders the traditional calendar view.
+     * Creates a horizontal row of calendar days with events.
+     * 
+     * @method renderTraditionalCalendar
+     * @param {Object} eventsByDate - Events grouped by date
+     * @returns {string} HTML string for the traditional calendar view
+     * @description Generates the traditional calendar layout showing days
+     * in a horizontal row format with event indicators.
+     */
     renderTraditionalCalendar(eventsByDate) {
         // Only show the next X days, starting from today
         const daysToShow = this.currentDays;
@@ -237,6 +344,15 @@ class NewTabPage {
         `;
     }
 
+    /**
+     * Renders a calendar week row.
+     * Creates a week container for calendar days.
+     * 
+     * @method renderWeek
+     * @param {Array} week - Array of day data objects
+     * @returns {string} HTML string for a calendar week
+     * @description Generates a week container with calendar days.
+     */
     renderWeek(week) {
         return `
             <div class="calendar-week">
@@ -245,6 +361,16 @@ class NewTabPage {
         `;
     }
 
+    /**
+     * Renders a single calendar day cell.
+     * Creates a day cell with date, name, and event indicators.
+     * 
+     * @method renderCalendarDay
+     * @param {Object} dayData - Day data object containing date and events
+     * @returns {string} HTML string for a calendar day cell
+     * @description Generates a calendar day cell with proper styling
+     * and event indicators.
+     */
     renderCalendarDay(dayData) {
         const { date, dateKey, hasEvents, events } = dayData;
         const isToday = this.isToday(date);
@@ -274,6 +400,17 @@ class NewTabPage {
         `;
     }
 
+    /**
+     * Renders a calendar event within a day cell.
+     * Creates a compact event display for traditional view.
+     * 
+     * @method renderCalendarEvent
+     * @param {Object} event - Calendar event object
+     * @param {string} dateKey - Date key for the event
+     * @returns {string} HTML string for a calendar event
+     * @description Generates a compact event display suitable for
+     * traditional calendar view.
+     */
     renderCalendarEvent(event, dateKey) {
         const startTime = new Date(event.start.dateTime || event.start.date);
         const isAllDay = !event.start.dateTime;
@@ -295,6 +432,15 @@ class NewTabPage {
         `;
     }
 
+    /**
+     * Checks if a given date is today.
+     * Compares the date with the current date.
+     * 
+     * @method isToday
+     * @param {Date} date - Date to check
+     * @returns {boolean} True if the date is today, false otherwise
+     * @description Determines if a given date represents today's date.
+     */
     isToday(date) {
         const today = new Date();
         return date.getDate() === today.getDate() &&
@@ -302,12 +448,31 @@ class NewTabPage {
                date.getFullYear() === today.getFullYear();
     }
 
+    /**
+     * Checks if a given date is in the current month.
+     * Compares the month and year with the current date.
+     * 
+     * @method isCurrentMonth
+     * @param {Date} date - Date to check
+     * @returns {boolean} True if the date is in the current month, false otherwise
+     * @description Determines if a given date falls within the current month.
+     */
     isCurrentMonth(date) {
         const today = new Date();
         return date.getMonth() === today.getMonth() &&
                date.getFullYear() === today.getFullYear();
     }
 
+    /**
+     * Groups calendar events by date.
+     * Organizes events into a date-keyed object for easier rendering.
+     * 
+     * @method groupEventsByDate
+     * @param {Array} events - Array of calendar events
+     * @returns {Object} Events grouped by date key (YYYY-MM-DD format)
+     * @description Groups events by their occurrence date, handling multi-day
+     * events and sorting events within each date by start time.
+     */
     groupEventsByDate(events) {
         const grouped = {};
         const now = new Date();
@@ -367,6 +532,17 @@ class NewTabPage {
         return grouped;
     }
 
+    /**
+     * Renders a calendar day in agenda view.
+     * Creates a day container with events for the agenda layout.
+     * 
+     * @method renderDay
+     * @param {string} dateString - Date string in YYYY-MM-DD format
+     * @param {Array} events - Array of events for this day
+     * @returns {string} HTML string for a calendar day in agenda view
+     * @description Generates a day container for agenda view with
+     * proper date formatting and event list.
+     */
     renderDay(dateString, events) {
         // For all-day events, dateString is YYYY-MM-DD and should be interpreted as local time
         // For timed events, dateString is also YYYY-MM-DD
@@ -394,6 +570,17 @@ class NewTabPage {
         `;
     }
 
+    /**
+     * Renders a calendar event in agenda view.
+     * Creates a detailed event display with time, title, and location.
+     * 
+     * @method renderEvent
+     * @param {Object} event - Calendar event object
+     * @param {string} currentDateString - Current date string for context
+     * @returns {string} HTML string for a calendar event in agenda view
+     * @description Generates a detailed event display with proper time
+     * formatting and location information.
+     */
     renderEvent(event, currentDateString) {
         const startTime = new Date(event.start.dateTime || event.start.date);
         const endTime = new Date(event.end.dateTime || event.end.date);
@@ -482,11 +669,29 @@ class NewTabPage {
         `;
     }
 
+    /**
+     * Displays an error message in the calendar area.
+     * Shows user-friendly error messages when calendar loading fails.
+     * 
+     * @method showError
+     * @param {string} message - Error message to display
+     * @description Displays an error message in the calendar content area
+     * when calendar operations fail.
+     */
     showError(message) {
         const calendarContent = document.getElementById('calendarContent');
         calendarContent.innerHTML = `<div class="error-message">${message}</div>`;
     }
 
+    /**
+     * Generates sample calendar events for testing and demonstration.
+     * Creates realistic sample data when real calendar is not available.
+     * 
+     * @method generateSampleEvents
+     * @returns {Array} Array of sample calendar events
+     * @description Generates a set of realistic sample calendar events
+     * for testing and demonstration purposes.
+     */
     generateSampleEvents() {
         const events = [];
         const today = new Date();
@@ -604,11 +809,37 @@ class NewTabPage {
     }
 }
 
+/**
+ * Service class for interacting with Google Calendar API.
+ * Handles authentication and event retrieval from Google Calendar.
+ * 
+ * @class GoogleCalendarService
+ * @description Provides methods for authenticating with Google Calendar
+ * and retrieving calendar events through the Google Calendar API.
+ */
 class GoogleCalendarService {
+    /**
+     * Initializes a new GoogleCalendarService instance.
+     * Sets up the authentication state.
+     * 
+     * @constructor
+     * @description Creates a new GoogleCalendarService instance with
+     * initial authentication state set to false.
+     */
     constructor() {
         this.isAuthenticated = false;
     }
 
+    /**
+     * Authenticates with Google Calendar API.
+     * Attempts to get an auth token and updates authentication state.
+     * 
+     * @async
+     * @method authenticate
+     * @returns {Promise<boolean>} True if authentication successful, false otherwise
+     * @description Attempts to authenticate with Google Calendar API using
+     * Chrome identity API and updates the authentication state.
+     */
     async authenticate() {
         try {
             const token = await this.getAuthToken();
@@ -620,6 +851,16 @@ class GoogleCalendarService {
         }
     }
 
+    /**
+     * Gets an authentication token from Chrome identity API.
+     * Requests user authorization for Google Calendar access.
+     * 
+     * @async
+     * @method getAuthToken
+     * @returns {Promise<string>} Authentication token for Google Calendar API
+     * @description Requests an authentication token from Chrome identity API
+     * for accessing Google Calendar services.
+     */
     async getAuthToken() {
         return new Promise((resolve, reject) => {
             chrome.identity.getAuthToken({ interactive: true }, (token) => {
@@ -632,6 +873,17 @@ class GoogleCalendarService {
         });
     }
 
+    /**
+     * Retrieves calendar events from Google Calendar API.
+     * Fetches events for the specified number of days from today.
+     * 
+     * @async
+     * @method getEvents
+     * @param {number} days - Number of days to fetch events for (default: 7)
+     * @returns {Promise<Array>} Array of calendar events
+     * @description Fetches calendar events from Google Calendar API for
+     * the specified number of days starting from today.
+     */
     async getEvents(days = 7) {
         const isAuthenticated = await this.authenticate();
         if (!isAuthenticated) {
@@ -669,7 +921,13 @@ class GoogleCalendarService {
     }
 }
 
-// Initialize the new tab page when the DOM is loaded
+/**
+ * Initializes the new tab page when the DOM is loaded.
+ * Creates a new NewTabPage instance to start the application.
+ * 
+ * @description Sets up the new tab page functionality when the DOM
+ * content is fully loaded and ready for interaction.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     new NewTabPage();
 }); 

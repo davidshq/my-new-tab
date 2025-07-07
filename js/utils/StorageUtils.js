@@ -5,6 +5,7 @@
  * @class StorageUtils
  * @description Contains utility functions for handling Chrome sync storage
  * operations including getting, setting, and managing extension settings.
+ * @global
  */
 class StorageUtils {
     /**

@@ -5,6 +5,8 @@
  * @class CalendarRenderer
  * @description Provides rendering functionality for different calendar
  * view modes including traditional and agenda layouts.
+ * 
+ * @requires TimeUtils - Global utility class for time formatting
  */
 class CalendarRenderer {
     /**
@@ -190,11 +192,7 @@ class CalendarRenderer {
         
         let timeString = '';
         if (!isAllDay) {
-            timeString = startTime.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
+            timeString = TimeUtils.formatTime(startTime);
         }
 
         return `
@@ -252,83 +250,7 @@ class CalendarRenderer {
      * formatting and location information.
      */
     renderEvent(event, currentDateString) {
-        const startTime = new Date(event.start.dateTime || event.start.date);
-        const endTime = new Date(event.end.dateTime || event.end.date);
-        
-        // For all-day events, the end date is exclusive, so we need to adjust
-        if (event.start.date) {
-            endTime.setDate(endTime.getDate() - 1);
-        }
-        
-        // Parse current date to compare with event dates
-        const [year, month, day] = currentDateString.split('-');
-        const currentDate = new Date(Number(year), Number(month) - 1, Number(day));
-        
-        let timeString = '';
-        let isFirstDay = false;
-        let isLastDay = false;
-        
-        if (event.start.dateTime) {
-            // Timed event
-            const currentDateStart = new Date(currentDate);
-            const currentDateEnd = new Date(currentDate);
-            currentDateEnd.setDate(currentDateEnd.getDate() + 1);
-            
-            isFirstDay = startTime >= currentDateStart && startTime < currentDateEnd;
-            isLastDay = endTime > currentDateStart && endTime <= currentDateEnd;
-            
-            if (isFirstDay && isLastDay) {
-                // Event starts and ends on the same day
-                timeString = `${startTime.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                })} - ${endTime.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                })}`;
-            } else if (isFirstDay) {
-                // Event starts on this day
-                timeString = `${startTime.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                })} - ...`;
-            } else if (isLastDay) {
-                // Event ends on this day
-                timeString = `... - ${endTime.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                })}`;
-            } else {
-                // Event spans through this day (middle day)
-                timeString = 'All day';
-            }
-        } else {
-            // All-day event
-            const currentDateStart = new Date(currentDate);
-            const currentDateEnd = new Date(currentDate);
-            currentDateEnd.setDate(currentDateEnd.getDate() + 1);
-            
-            isFirstDay = startTime >= currentDateStart && startTime < currentDateEnd;
-            isLastDay = endTime >= currentDateStart && endTime < currentDateEnd;
-            
-            if (isFirstDay && isLastDay) {
-                // Single day all-day event
-                timeString = 'All day';
-            } else if (isFirstDay) {
-                // Multi-day event starts on this day
-                timeString = 'All day (starts)';
-            } else if (isLastDay) {
-                // Multi-day event ends on this day
-                timeString = 'All day (ends)';
-            } else {
-                // Multi-day event spans through this day
-                timeString = 'All day';
-            }
-        }
+        const timeString = TimeUtils.formatEventTimeRangeMultiDay(event, currentDateString);
 
         return `
             <div class="event-item">

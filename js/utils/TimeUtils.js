@@ -5,6 +5,7 @@
  * @class TimeUtils
  * @description Contains utility functions for handling time display,
  * date comparisons, and event time formatting.
+ * @global
  */
 class TimeUtils {
     /**

@@ -18,8 +18,7 @@ After analyzing the codebase, I identified **5 main categories** of similar func
 Time formatting code is scattered across multiple files with similar patterns:
 
 **Files with time formatting:**
-- `newtab.js` (lines 57-62, 419, 611-615, 622, 629)
-- `CalendarRenderer.js` (lines 192, 281-285, 292, 299)
+- `js/components/CalendarRenderer.js` (lines 192, 281-285, 292, 299)
 - `TimeUtils.js` (already has some, lines 20, 91, 118-122)
 
 ### Recommended Solution
@@ -50,8 +49,7 @@ const timeString = TimeUtils.formatTime(now);
 The `isToday()` and `isCurrentMonth()` functions are duplicated:
 
 **Duplicated in:**
-- `newtab.js` (lines 444-459, 460-475)
-- `CalendarRenderer.js` (lines 411-426, 427-441)
+- `js/components/CalendarRenderer.js` (lines 411-426, 427-441)
 - `TimeUtils.js` (already has these, lines 48-58, 65-75)
 
 ### Recommended Solution
@@ -76,7 +74,7 @@ TimeUtils.isToday(date)
 Storage operations are repeated across multiple files:
 
 **Files with storage operations:**
-- `newtab.js` (lines 175-205, 207-225)
+- `js/app/NewTabApp.js` (lines 175-205, 207-225)
 - `popup.js` (lines 33-40)
 - `background.js` (lines 23-25, 50-56)
 - `SettingsService.js` (lines 39-59, 81-102)
@@ -110,8 +108,7 @@ await StorageUtils.setSetting('calendarDays', 7);
 Complex event time range formatting is duplicated:
 
 **Files with complex event formatting:**
-- `newtab.js` (lines 611-629) - Multi-day event logic
-- `CalendarRenderer.js` (lines 281-299) - Similar multi-day logic
+- `js/components/CalendarRenderer.js` (lines 281-299) - Multi-day event logic
 - `TimeUtils.js` (already has basic version, lines 118-122)
 
 ### Recommended Solution
@@ -188,8 +185,8 @@ DOMUtils.showModal('settingsModal');
 ## Files to Update
 
 ### Primary Files (High Impact)
-1. `newtab.js` - Remove duplicated functions, use utilities
-2. `CalendarRenderer.js` - Remove duplicated functions, use utilities
+1. `js/app/NewTabApp.js` - Main application (modular structure)
+2. `js/components/CalendarRenderer.js` - Remove duplicated functions, use utilities
 3. `popup.js` - Use `StorageUtils` for storage operations
 4. `background.js` - Use `StorageUtils` for storage operations
 
@@ -216,44 +213,42 @@ DOMUtils.showModal('settingsModal');
 
 ## Example Migration
 
-### Before (newtab.js):
+### Before (js/components/CalendarRenderer.js):
 ```javascript
-updateTime() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    });
-    const dateString = now.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+renderEvent(event, currentDateString) {
+    const startTime = new Date(event.start.dateTime || event.start.date);
+    const endTime = new Date(event.end.dateTime || event.end.date);
     
-    document.getElementById('timeDisplay').textContent = `${timeString} • ${dateString}`;
-}
-
-isToday(date) {
-    const today = new Date();
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
+    // 50+ lines of complex date parsing, comparison, and formatting logic
+    // ... complex date comparison logic ...
+    if (isFirstDay && isLastDay) {
+        timeString = `${startTime.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        })} - ${endTime.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        })}`;
+    }
+    // ... more complex logic ...
 }
 ```
 
-### After (newtab.js):
+### After (js/components/CalendarRenderer.js):
 ```javascript
-updateTime() {
-    const now = new Date();
-    const timeString = TimeUtils.formatTime(now);
-    const dateString = TimeUtils.formatDate(now);
+renderEvent(event, currentDateString) {
+    const timeString = TimeUtils.formatEventTimeRangeMultiDay(event, currentDateString);
     
-    DOMUtils.setTextContent('timeDisplay', `${timeString} • ${dateString}`);
+    return `
+        <div class="event-item">
+            <div class="event-time">${timeString}</div>
+            <div class="event-title">${event.summary}</div>
+            ${event.location ? `<div class="event-location">📍 ${event.location}</div>` : ''}
+        </div>
+    `;
 }
-
-// Remove isToday method - use TimeUtils.isToday() instead
 ```
 
 This refactoring will significantly improve code quality, reduce duplication, and make the codebase more maintainable. 

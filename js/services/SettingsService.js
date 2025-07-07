@@ -37,7 +37,7 @@ class SettingsService {
      */
     async loadSettings() {
         try {
-            const result = await chrome.storage.sync.get(Object.keys(this.defaultSettings));
+            const result = await StorageUtils.getSettings(Object.keys(this.defaultSettings));
             return { ...this.defaultSettings, ...result };
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -57,7 +57,7 @@ class SettingsService {
      */
     async saveSettings(settings) {
         try {
-            await chrome.storage.sync.set(settings);
+            await StorageUtils.setSettings(settings);
             return true;
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -79,7 +79,7 @@ class SettingsService {
      */
     async updateSetting(key, value) {
         try {
-            await chrome.storage.sync.set({ [key]: value });
+            await StorageUtils.setSetting(key, value);
             return true;
         } catch (error) {
             console.error('Error updating setting:', error);
@@ -100,8 +100,8 @@ class SettingsService {
      */
     async getSetting(key) {
         try {
-            const result = await chrome.storage.sync.get([key]);
-            return result[key] !== undefined ? result[key] : this.defaultSettings[key];
+            const result = await StorageUtils.getSetting(key);
+            return result !== null ? result : this.defaultSettings[key];
         } catch (error) {
             console.error('Error getting setting:', error);
             return this.defaultSettings[key];

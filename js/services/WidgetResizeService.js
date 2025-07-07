@@ -252,9 +252,9 @@ class WidgetResizeService {
      */
     async saveWidgetDimensions(widgetId, width, height) {
         try {
-            const settings = await chrome.storage.sync.get('widgetDimensions') || {};
+            const settings = await StorageUtils.getSetting('widgetDimensions') || {};
             settings[widgetId] = { width, height };
-            await chrome.storage.sync.set({ widgetDimensions: settings });
+            await StorageUtils.setSetting('widgetDimensions', settings);
         } catch (error) {
             console.error('Error saving widget dimensions:', error);
         }
@@ -271,8 +271,8 @@ class WidgetResizeService {
      */
     async loadWidgetDimensions() {
         try {
-            const result = await chrome.storage.sync.get('widgetDimensions');
-            const widgetDimensions = result.widgetDimensions || {};
+            const result = await StorageUtils.getSetting('widgetDimensions');
+            const widgetDimensions = result || {};
             
             Object.keys(widgetDimensions).forEach(widgetId => {
                 const widget = document.getElementById(widgetId);

@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function loadSettings() {
     try {
-        const result = await chrome.storage.sync.get(['calendarDays']);
+        const result = await StorageUtils.getSettings(['calendarDays']);
         const calendarDays = result.calendarDays || 7;
         document.getElementById('calendarDays').textContent = calendarDays;
     } catch (error) {

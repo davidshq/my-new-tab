@@ -173,7 +173,7 @@ class NewTabPage {
      */
     async loadSettings() {
         try {
-            const result = await chrome.storage.sync.get(['calendarDays', 'calendarView', 'useSampleData']);
+            const result = await StorageUtils.getSettings(['calendarDays', 'calendarView', 'useSampleData']);
             console.log('Loaded settings:', result);
             
             if (result.calendarDays) {
@@ -205,7 +205,7 @@ class NewTabPage {
      */
     async saveSettings() {
         try {
-            await chrome.storage.sync.set({ 
+            await StorageUtils.setSettings({ 
                 calendarDays: this.currentDays,
                 calendarView: this.isTraditionalView,
                 useSampleData: this.useSampleData

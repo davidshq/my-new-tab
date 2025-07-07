@@ -332,4 +332,9 @@ class GoogleCalendarService {
         const data = await response.json();
         return data.items || [];
     }
+}
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CalendarService;
 } 

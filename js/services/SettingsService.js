@@ -1,3 +1,5 @@
+const StorageUtils = require('../utils/StorageUtils');
+
 /**
  * Service class for managing application settings.
  * Handles loading, saving, and updating user preferences.
@@ -107,4 +109,9 @@ class SettingsService {
             return this.defaultSettings[key];
         }
     }
+}
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SettingsService;
 } 

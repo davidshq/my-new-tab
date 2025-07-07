@@ -139,4 +139,9 @@ class StorageUtils {
             return {};
         }
     }
+}
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = StorageUtils;
 } 

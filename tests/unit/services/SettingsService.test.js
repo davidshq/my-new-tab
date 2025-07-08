@@ -20,6 +20,30 @@ describe('SettingsService', () => {
     StorageUtils.getSetting.mockReset();
   });
 
+  it('should load settings with defaults when storage is empty', async () => {
+    StorageUtils.getSettings.mockImplementation((keys) => {
+      if (Array.isArray(keys) && keys.length === 5) {
+        return Promise.resolve({});
+      }
+      return Promise.resolve({});
+    });
+    const settings = await settingsService.loadSettings();
+    expect(settings.calendarDays).toBe(7);
+    expect(settings.calendarView).toBe(true);
+    expect(settings.useSampleData).toBe(false);
+  });
+
+  it('should load settings from storage and merge with defaults', async () => {
+    StorageUtils.getSettings.mockImplementation((keys) => {
+      return Promise.resolve({ calendarDays: 14, useSampleData: true });
+    });
+    const settings = await settingsService.loadSettings();
+    expect(settings.calendarDays).toBe(14);
+    expect(settings.calendarView).toBe(true); // default
+    expect(settings.useSampleData).toBe(true);
+    expect(settings.daysPerRow).toBe(4); // default
+  });
+
   describe('loadSettings', () => {
     it('should load settings with defaults', async () => {
       // Arrange
@@ -152,6 +176,19 @@ describe('SettingsService', () => {
       // Assert
       expect(result).toBe(true);
       expect(StorageUtils.setSettings).toHaveBeenCalledWith(allSettings);
+    });
+
+    it('should save settings to storage successfully', async () => {
+      StorageUtils.setSettings.mockResolvedValue();
+      const result = await settingsService.saveSettings({ calendarDays: 10, useSampleData: true });
+      expect(result).toBe(true);
+      expect(StorageUtils.setSettings).toHaveBeenCalledWith({ calendarDays: 10, useSampleData: true });
+    });
+
+    it('should handle storage errors gracefully when saving settings', async () => {
+      StorageUtils.setSettings.mockRejectedValue(new Error('Save error'));
+      const result = await settingsService.saveSettings({ calendarDays: 10 });
+      expect(result).toBe(false);
     });
   });
 

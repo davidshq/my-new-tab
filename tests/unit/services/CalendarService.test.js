@@ -20,6 +20,28 @@ describe('CalendarService', () => {
     global.fetch.mockClear();
   });
 
+  it('should return sample events when useSampleData is true', async () => {
+    const events = await calendarService.getEvents(7, true);
+    expect(Array.isArray(events)).toBe(true);
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[0]).toHaveProperty('summary');
+    expect(events[0]).toHaveProperty('start');
+  });
+
+  it('should authenticate and fetch real events from Google Calendar when useSampleData is false', async () => {
+    const mockEvents = [
+      {
+        summary: 'Test Event',
+        start: { dateTime: '2024-01-15T10:00:00Z' },
+        end: { dateTime: '2024-01-15T11:00:00Z' }
+      }
+    ];
+    calendarService.googleCalendarService.getEvents = jest.fn().mockResolvedValue(mockEvents);
+    const events = await calendarService.getEvents(7, false);
+    expect(events).toEqual(mockEvents);
+    expect(calendarService.googleCalendarService.getEvents).toHaveBeenCalledWith(7);
+  });
+
   describe('getEvents', () => {
     it('should return sample events when useSampleData is true', async () => {
       // Act

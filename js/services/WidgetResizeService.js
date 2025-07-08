@@ -1,3 +1,5 @@
+const StorageUtils = require('../utils/StorageUtils');
+
 /**
  * Service class for managing widget resize functionality.
  * Handles drag-to-resize operations for calendar widgets.
@@ -304,4 +306,9 @@ class WidgetResizeService {
             this.saveWidgetDimensions(widgetId, null, null);
         }
     }
+}
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = WidgetResizeService;
 } 

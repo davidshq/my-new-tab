@@ -42,6 +42,11 @@ describe('CalendarService', () => {
     expect(calendarService.googleCalendarService.getEvents).toHaveBeenCalledWith(7);
   });
 
+  it('should handle authentication errors gracefully', async () => {
+    calendarService.googleCalendarService.getEvents = jest.fn().mockRejectedValue(new Error('Authentication required'));
+    await expect(calendarService.getEvents(7, false)).rejects.toThrow('Authentication required');
+  });
+
   describe('getEvents', () => {
     it('should return sample events when useSampleData is true', async () => {
       // Act
@@ -137,6 +142,12 @@ describe('CalendarService', () => {
       
       // Assert
       expect(events).toEqual([]);
+    });
+
+    it('should generate correct number of sample events for given days', () => {
+      const events = calendarService.generateSampleEvents(7);
+      expect(events.length).toBeGreaterThan(0);
+      expect(events.length).toBeLessThanOrEqual(21); // Max 3 events per day for 7 days
     });
   });
 

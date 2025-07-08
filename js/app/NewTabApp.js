@@ -6,6 +6,12 @@
  * @description The primary application class that coordinates all services
  * including settings, calendar, rendering, and widget management.
  */
+const SettingsService = require('../services/SettingsService');
+const CalendarService = require('../services/CalendarService');
+const CalendarRenderer = require('../components/CalendarRenderer');
+const SettingsModal = require('../components/SettingsModal');
+const WidgetResizeService = require('../services/WidgetResizeService');
+
 class NewTabApp {
     /**
      * Initializes a new NewTabApp instance.
@@ -277,4 +283,9 @@ class NewTabApp {
             calendarContent.innerHTML = `<div class="error-message">${message}</div>`;
         }
     }
+} 
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = NewTabApp;
 } 
